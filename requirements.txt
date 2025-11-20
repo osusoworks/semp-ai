@@ -13,6 +13,9 @@ pynput>=1.7.0
 SpeechRecognition>=3.10.0
 pyaudio>=0.2.11
 
+# 音声出力
+pygame>=2.5.0
+
 # GUI (標準ライブラリのため不要だが、参考として記載)
 # tkinter - Python標準ライブラリ
 
