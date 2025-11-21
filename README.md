@@ -1,355 +1,204 @@
-# 🎯 SENPAI - PC操作ガイド
+# SENP_AI - AI Assistant
 
-**シンプルで洗練されたAI搭載PC操作アシスタント**
+**Version 1120_01** (2025年11月20日)
 
-[![GitHub Stars](https://img.shields.io/github/stars/osusoworks/pc_assistant_app?style=social)](https://github.com/osusoworks/pc_assistant_app/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/osusoworks/pc_assistant_app?style=social)](https://github.com/osusoworks/pc_assistant_app/network/members)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
+シンプルで使いやすいAIアシスタントアプリケーション。画面のスクリーンショットを撮影し、AIが画面を見て質問に答えます。
 
----
+## 🎯 特徴
 
-## 🌟 特徴
+- **📸 スクリーンショット分析** - 画面をキャプチャしてAIが内容を理解
+- **🤖 モデル選択** - GPT-5.1、GPT-5、GPT-4シリーズから選択可能
+- **💬 自然な会話** - テキストまたは音声で質問
+- **🔊 音声回答** - AIの回答を音声で読み上げ（ON/OFF可能）
+- **🎤 音声入力** - マイクボタンで音声入力
+- **⌨️ キーボード操作** - Returnキーで質問送信
+- **📝 履歴表示** - 過去の質問と回答を表示
 
-### **🎨 シンプルで洗練されたUI**
-- ミニマルデザインによる直感的な操作
-- フラットデザインで視覚的ノイズを排除
-- レスポンシブ対応（最小500x400px）
+## 🚀 使い方
 
-### **🤖 AI搭載の高精度解析**
-- OpenAI GPT-4による画面解析
-- 座標精度改善システム
-- 信頼度評価による安全な操作ガイド
-
-### **🏹 クリーン矢印オーバーレイ**
-- 影なしの鮮明な矢印表示
-- 改善された三角形先端
-- 自動非表示機能（10秒後）
-
-### **📚 お気に入り機能**
-- AI回答の保存・管理
-- タグ付けによる分類
-- 高速検索機能
-
-### **🎤 音声認識対応**
-- ハンズフリー操作
-- 自動音声調整
-- 複数マイクロフォン対応
-
-### **📷 UI非表示スクリーンショット**
-- 純粋なPC画面キャプチャ
-- アプリケーションUI自動非表示
-- 高解像度対応
-
----
-
-## 🚀 クイックスタート
-
-### **必要環境**
-- Python 3.11以上
-- Windows 10/11, macOS 10.15+, Ubuntu 20.04+
-- OpenAI APIキー
-
-### **インストール**
+### 1. 起動
 
 ```bash
-# 1. リポジトリをクローン
-git clone https://github.com/osusoworks/pc_assistant_app.git
-cd pc_assistant_app
+python run.py
+```
 
-# 2. 依存関係をインストール
+### 2. 基本操作
+
+1. **スクリーンショットを撮る**
+   - 「📸 スクリーンショット」ボタンをクリック
+   - 画面全体がキャプチャされます
+
+2. **AIモデルを選択**
+   - 「🤖 モデル」ドロップダウンから選択
+   - デフォルト: GPT-5.1 Instant（最新・推奨）
+
+3. **質問する**
+   - テキスト入力欄に質問を入力
+   - Returnキーを押して送信
+   - または🎤マイクボタンで音声入力
+
+4. **回答を聞く**
+   - AIが画面を見て回答
+   - 「🔊 音声回答」がONの場合、音声で読み上げ
+
+## 🤖 利用可能なAIモデル
+
+### GPT-5.1シリーズ（最新 - 2025年11月）
+- **GPT-5.1 Instant** ⚡ - 最新・高速・会話型（推奨）
+- **GPT-5.1** - 最新・高精度
+
+### GPT-5シリーズ（2025年10月）
+- **GPT-5** - 高精度
+- **GPT-5 Instant** ⚡ - 高速
+
+### GPT-4.1シリーズ
+- **GPT-4.1** - 高精度
+- **GPT-4.1 Mini** - 高速・低コスト
+
+### GPT-4.0シリーズ
+- **GPT-4o** - 安定
+- **GPT-4o Mini** - 高速・低コスト
+
+## 💡 使用例
+
+### 例1: アプリケーションの使い方を聞く
+```
+スクリーンショット → 「このボタンは何をするものですか？」
+```
+
+### 例2: エラーメッセージの解決
+```
+スクリーンショット → 「このエラーを解決する方法を教えてください」
+```
+
+### 例3: ゲームの攻略
+```
+スクリーンショット → 「次に何をすればいいですか？」
+```
+
+### 例4: 翻訳
+```
+スクリーンショット → 「この英語のテキストを日本語に翻訳してください」
+```
+
+## 🎨 UI説明
+
+```
+┌────────────────────────────────────────────────────────────┐
+│ [📸] [🔊] [🤖 モデル: GPT-5.1 Instant ⚡]     準備完了 │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  会話履歴エリア                                             │
+│  - ユーザーの質問                                           │
+│  - AIの回答（使用モデル表示）                                │
+│                                                            │
+├────────────────────────────────────────────────────────────┤
+│ [質問を入力してください（Returnキーで送信）]        [🎤] │
+└────────────────────────────────────────────────────────────┘
+```
+
+## ⚙️ 設定
+
+### 音声回答のON/OFF
+- 「🔊 音声回答」チェックボックスで切り替え
+- OFFにすると、テキストのみで回答
+
+### AIモデルの変更
+- UIの「🤖 モデル」ドロップダウンから選択
+- リアルタイムで変更可能
+- 次の質問から新しいモデルが適用されます
+
+## 📦 必要なパッケージ
+
+```
+openai>=1.0.0
+pillow>=10.0.0
+pyaudio>=0.2.13
+SpeechRecognition>=3.10.0
+pygame>=2.5.0
+```
+
+インストール:
+```bash
 pip install -r requirements.txt
-
-# 3. 環境変数を設定
-export OPENAI_API_KEY='your-openai-api-key-here'
-
-# 4. アプリケーションを起動
-python run_simple_clean.py
 ```
 
-### **Windows向け**
-```cmd
-# PowerShellの場合
-$env:OPENAI_API_KEY='your-openai-api-key-here'
-python run_simple_clean.py
-
-# コマンドプロンプトの場合
-set OPENAI_API_KEY=your-openai-api-key-here
-python run_simple_clean.py
-```
-
----
-
-## 📖 使用方法
-
-### **基本的な使い方**
-
-1. **質問を入力**
-   ```
-   例: 「新しいファイルを作成したい」
-       「メールを送信するには？」
-       「設定画面を開きたい」
-   ```
-
-2. **AI解析実行**
-   - 「質問する」ボタンをクリック
-   - または `Ctrl+Enter` で実行
-
-3. **矢印ガイド確認**
-   - 画面上に赤い矢印が表示
-   - 操作すべき箇所を正確に指示
-
-4. **お気に入り保存**
-   - 有用な回答は「⭐ お気に入り保存」
-   - タグ付けで分類・整理
-
-### **キーボードショートカット**
-- `Ctrl+Enter`: 質問実行
-- `Escape`: 入力クリア
-- `Ctrl+Q`: アプリケーション終了
-
-### **お気に入り管理**
-- 「📚 お気に入り一覧」で保存済み回答を管理
-- リアルタイム検索で素早く発見
-- 不要な項目は安全に削除
-
----
-
-## 🏗️ アーキテクチャ
-
-### **コアモジュール**
+## 📁 ファイル構成
 
 ```
-pc_assistant_app/
-├── run_simple_clean.py          # メイン実行ファイル
-├── main_controller_simple.py    # 制御中枢
-├── ui_module_simple.py          # シンプルUI
-├── capture_module_ui_aware.py   # スクリーンショット
-├── ai_module_improved.py        # AI解析エンジン
-├── overlay_module_clean.py      # クリーン矢印
-├── speech_module.py             # 音声認識
-└── simple_library.py            # お気に入り管理
-```
-
-### **データ構造**
-
-```
-~/SENPAI/
-├── favorites/                   # お気に入りファイル
-│   ├── favorite_20241103_*.json
-│   └── ...
-├── favorites_index.json         # インデックス
-└── screenshots/                 # スクリーンショット
-    ├── screenshot_*.png
+SENP_AI/
+├── run.py                    # メイン実行ファイル
+├── controller_1120_01.py     # コントローラー
+├── ui_1120_01.py            # UIモジュール
+├── ai_1120_01.py            # AIモジュール
+├── tts_1120_01.py           # 音声出力モジュール
+├── speech_1120_01.py        # 音声入力モジュール
+├── requirements.txt         # 依存パッケージ
+├── README.md               # このファイル
+└── archived/               # 旧バージョン
     └── ...
 ```
 
----
+## 📝 命名規則
 
-## 🔧 設定・カスタマイズ
+ファイル名: `[モジュール名]_[MMDD]_[順番].py`
 
-### **環境変数**
+- `MMDD`: 月日（例: 1120 = 11月20日）
+- `順番`: その日の開発順（01, 02, 03...）
 
-| 変数名 | 説明 | デフォルト |
-|--------|------|-----------|
-| `OPENAI_API_KEY` | OpenAI APIキー | 必須 |
-| `SENPAI_WORK_DIR` | 作業ディレクトリ | `~/SENPAI` |
-| `SCREENSHOT_DIR` | スクリーンショット保存先 | `/tmp/pc_assistant_screenshots` |
+例:
+- `ui_1120_01.py` - 11月20日の最初のUIモジュール
+- `ai_1120_02.py` - 11月20日の2番目のAIモジュール
 
-### **設定ファイル**
+## 🔧 トラブルシューティング
 
-```python
-# config.py (オプション)
-SETTINGS = {
-    "ui": {
-        "window_size": (600, 500),
-        "theme": "light",
-        "font_size": 10
-    },
-    "ai": {
-        "model": "gpt-4",
-        "max_tokens": 1000,
-        "temperature": 0.1
-    },
-    "overlay": {
-        "arrow_color": "#FF4444",
-        "arrow_size": 60,
-        "auto_hide_seconds": 10
-    }
-}
-```
+### 音声入力が動作しない
+- マイクの接続を確認
+- マイクの権限を許可
+- PyAudioが正しくインストールされているか確認
 
----
+### 音声出力が動作しない
+- スピーカー/ヘッドフォンの接続を確認
+- 音量設定を確認
+- pygameが正しくインストールされているか確認
 
-## 🤝 コントリビューション
+### API エラー
+- OPENAI_API_KEY環境変数が設定されているか確認
+- APIキーが有効か確認
+- インターネット接続を確認
+- 選択したモデルが利用可能か確認
 
-### **貢献方法**
+### モデルが利用できない
+- 一部のモデルは段階的にロールアウトされています
+- 利用できない場合は、別のモデルを選択してください
+- GPT-4o-miniは常に利用可能です
 
-1. **リポジトリをフォーク**
-2. **機能ブランチを作成**
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-3. **変更をコミット**
-   ```bash
-   git commit -m 'Add amazing feature'
-   ```
-4. **ブランチにプッシュ**
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-5. **Pull Requestを作成**
+## 🔗 リンク
 
-### **開発環境セットアップ**
+- **GitHubリポジトリ**: https://github.com/osusoworks/pc_assistant_app
+- **OpenAI API**: https://platform.openai.com/
+- **問題報告**: GitHubのIssuesへ
 
-```bash
-# 開発用依存関係をインストール
-pip install -r requirements-dev.txt
+## 📝 更新履歴
 
-# コードフォーマット
-black .
+### Version 1120_01 (2025-11-20)
+- ✨ アプリ名を「SENPAI」から「SENP_AI」に変更
+- ✨ GPT-5.1シリーズ対応
+- ✨ UIでAIモデル選択機能を追加
+- ✨ ファイル命名規則を統一（MMDD_順番形式）
+- 🗂️ 旧バージョンをarchivedフォルダに整理
+- 📝 8つのGPTモデルから選択可能
+- 🎨 モデル名を会話履歴に表示
 
-# リント実行
-flake8 .
-
-# テスト実行
-pytest tests/
-```
-
-### **コーディング規約**
-
-- **Python**: PEP 8準拠
-- **コメント**: 日本語・英語併記
-- **テスト**: 新機能には必ずテストを追加
-- **ドキュメント**: 変更時は関連ドキュメントも更新
-
----
-
-## 🐛 トラブルシューティング
-
-### **よくある問題**
-
-#### **Q: 矢印が表示されない**
-```bash
-# 解決方法
-1. 画面解像度を確認
-2. オーバーレイ権限を確認
-3. ログでエラーメッセージを確認
-```
-
-#### **Q: 音声認識が動作しない**
-```bash
-# 解決方法
-1. マイクロフォンの接続を確認
-2. PyAudioのインストールを確認
-   pip install pyaudio
-3. 音声入力権限を確認
-```
-
-#### **Q: AI解析でエラーが発生**
-```bash
-# 解決方法
-1. OpenAI APIキーを確認
-2. インターネット接続を確認
-3. API利用制限を確認
-```
-
-### **ログ確認**
-
-```bash
-# 詳細ログを有効化
-export SENPAI_DEBUG=1
-python run_simple_clean.py
-
-# ログファイルの場所
-~/SENPAI/logs/senpai.log
-```
-
----
-
-## 📊 パフォーマンス
-
-### **ベンチマーク**
-
-| 機能 | 平均実行時間 | メモリ使用量 |
-|------|-------------|-------------|
-| 起動時間 | 2.3秒 | 45MB |
-| スクリーンショット | 0.8秒 | +15MB |
-| AI解析 | 3.2秒 | +25MB |
-| 矢印表示 | 0.1秒 | +5MB |
-
-### **最適化のヒント**
-
-- **高解像度環境**: スクリーンショット品質を調整
-- **低スペックPC**: AI解析頻度を制限
-- **ネットワーク制限**: ローカルキャッシュを活用
-
----
-
-## 🔒 セキュリティ
-
-### **プライバシー保護**
-
-- **ローカル処理**: スクリーンショットはローカル保存
-- **暗号化**: お気に入りデータの暗号化オプション
-- **匿名化**: 使用統計の匿名化
-
-### **セキュリティ機能**
-
-- **APIキー保護**: 環境変数での安全な管理
-- **権限制御**: 最小権限の原則
-- **監査ログ**: 操作履歴の記録
-
----
-
-## 📈 ロードマップ
-
-### **v1.1.0 (予定)**
-- [ ] プラグインシステム
-- [ ] 多言語対応（英語・中国語）
-- [ ] クラウド同期機能
-
-### **v1.2.0 (予定)**
-- [ ] 企業向け機能
-- [ ] 高度な音声コマンド
-- [ ] 機械学習による精度向上
-
-### **v2.0.0 (構想)**
-- [ ] Webアプリ版
-- [ ] モバイルアプリ連携
-- [ ] AIアシスタント統合
-
----
+### Previous Versions
+- SENPAI Assistant - シンプル版（矢印機能削除）
+- SENPAI - 座標検出版（アーカイブ済み）
 
 ## 📄 ライセンス
 
-このプロジェクトは [MIT License](LICENSE) の下で公開されています。
+このプロジェクトはMITライセンスの下で公開されています。
 
 ---
 
-## 🙏 謝辞
+**SENP_AI** - あなたのPCアシスタント 🤖✨
 
-- **OpenAI**: GPT-4 APIの提供
-- **Python Community**: 優秀なライブラリ群
-- **Contributors**: プロジェクトへの貢献
-- **Users**: フィードバックとサポート
-
----
-
-## 📞 サポート・連絡先
-
-- **Issues**: [GitHub Issues](https://github.com/osusoworks/pc_assistant_app/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/osusoworks/pc_assistant_app/discussions)
-- **Email**: support@senpai-app.com
-
----
-
-## ⭐ スターをお願いします！
-
-このプロジェクトが役に立ったら、ぜひ⭐をつけてください！
-
-[![GitHub Stars](https://img.shields.io/github/stars/osusoworks/pc_assistant_app?style=social)](https://github.com/osusoworks/pc_assistant_app/stargazers)
-
----
-
-*SENPAI - あなたのPC操作の頼れる先輩*
