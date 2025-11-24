@@ -30,8 +30,25 @@ class SENPAI_UI:
         
         self.root = tk.Tk()
         self.root.title("SENP_AI - AI Assistant")
-        self.root.geometry("900x650")
-        self.root.minsize(700, 500)
+        
+        # 画面サイズを取得して30%のサイズを計算
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        window_width = int(screen_width * 0.3)
+        window_height = int(screen_height * 0.3)
+        
+        # ウィンドウサイズと位置を設定（画面中央に配置）
+        x_position = int((screen_width - window_width) / 2)
+        y_position = int((screen_height - window_height) / 2)
+        
+        self.root.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
+        
+        # リサイズ可能にする
+        self.root.resizable(True, True)
+        
+        # 最小サイズを調整（必要に応じて）
+        self.root.minsize(400, 300)
         
         self.tts_enabled = tk.BooleanVar(value=True)
         self.selected_model = tk.StringVar(value=available_models[0][0])
@@ -266,6 +283,14 @@ class SENPAI_UI:
         """ウィンドウを閉じる"""
         self.root.quit()
         self.root.destroy()
+
+    def hide_window(self):
+        """ウィンドウを非表示にする"""
+        self.root.withdraw()
+
+    def show_window(self):
+        """ウィンドウを表示する"""
+        self.root.deiconify()
 
 
 # テスト用

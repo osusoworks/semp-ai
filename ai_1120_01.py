@@ -10,17 +10,13 @@ from openai import OpenAI
 class AIModule:
     # 利用可能なモデル一覧
     AVAILABLE_MODELS = [
-        ("gpt-5.1-instant", "GPT-5.1 Instant ⚡ (最新・推奨)"),
-        ("gpt-5.1", "GPT-5.1 (最新・高精度)"),
-        ("gpt-5", "GPT-5 (高精度)"),
-        ("gpt-5-instant", "GPT-5 Instant ⚡"),
-        ("gpt-4.1", "GPT-4.1 (高精度)"),
-        ("gpt-4.1-mini", "GPT-4.1 Mini (高速)"),
-        ("gpt-4o", "GPT-4o (安定)"),
+        ("gpt-4o", "GPT-4o (安定・推奨)"),
         ("gpt-4o-mini", "GPT-4o Mini (高速・低コスト)"),
+        ("gpt-4-turbo", "GPT-4 Turbo"),
+        ("gpt-4", "GPT-4"),
     ]
     
-    def __init__(self, model="gpt-5.1-instant"):
+    def __init__(self, model="gpt-4o"):
         """
         AIモジュールの初期化
         

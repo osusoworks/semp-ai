@@ -5,6 +5,7 @@ Main Controller for SENP_AI (Version 1120_01)
 
 import os
 import time
+import threading
 from datetime import datetime
 from ui_1120_01 import SENPAI_UI
 from ai_1120_01 import AIModule
@@ -15,9 +16,10 @@ from PIL import ImageGrab
 class SENPAI_Controller:
     def __init__(self):
         """コントローラーの初期化"""
-        # AIモジュール初期化（デフォルトモデル: gpt-5.1-instant）
-        self.ai_module = AIModule(model="gpt-5.1-instant")
-        self.speech_module = SpeechModule()
+        # AIモジュール初期化（デフォルトモデル: gpt-4o）
+        self.ai_module = AIModule(model="gpt-4o")
+        # 音声認識モジュールの初期化（コールバックを指定）
+        self.speech_module = SpeechModule(callback=self.on_speech_recognized)
         self.tts_module = TTSModule()
         
         # UI初期化
@@ -75,12 +77,15 @@ class SENPAI_Controller:
             # ユーザーメッセージを表示
             self.ui.add_message("user", question, self._get_timestamp())
             
-            # スクリーンショットがない場合
-            if not self.current_screenshot:
-                answer = "スクリーンショットが撮影されていません。まず「📸 スクリーンショット」ボタンをクリックしてください。"
-                self.ui.add_message("assistant", answer, self._get_timestamp())
-                self.ui.set_status("準備完了", "green")
-                return
+            # UIを一時的に非表示にしてスクリーンショットを撮影
+            self.ui.hide_window()
+            time.sleep(0.2)  # ウィンドウが消えるのを待つ
+            
+            try:
+                self.take_screenshot()
+            finally:
+                # スクリーンショット撮影後（またはエラー時）に必ずUIを再表示
+                self.ui.show_window()
             
             # AI分析
             self.ui.set_status(f"AI分析中... (モデル: {self.ai_module.get_model()})", "blue")
@@ -111,31 +116,43 @@ class SENPAI_Controller:
             self.ui.add_message("assistant", error_msg, self._get_timestamp())
             self.ui.set_status(error_msg, "red")
     
+    def on_speech_recognized(self, text):
+        """音声認識コールバック"""
+        if text:
+            self.ui.set_input_text(text)
+            self.ui.set_status("音声認識完了", "green")
+            # 自動的に質問を送信
+            time.sleep(0.5)
+            self.process_question(text)
+
     def handle_voice_input(self):
         """音声入力を処理"""
         try:
             self.ui.set_status("音声入力中...", "blue")
             
-            # 音声認識
-            result = self.speech_module.listen()
-            
-            if result["success"]:
-                recognized_text = result["text"]
-                self.ui.set_input_text(recognized_text)
-                self.ui.set_status("音声認識完了", "green")
-                
-                # 自動的に質問を送信
-                time.sleep(0.5)
-                self.process_question(recognized_text)
-            else:
-                error_msg = f"音声認識エラー: {result.get('error', '不明なエラー')}"
-                self.ui.set_status(error_msg, "red")
+            # 音声認識（一度だけ実行）
+            # 別スレッドで実行してUIをブロックしないようにする
+            threading.Thread(target=self._run_voice_recognition, daemon=True).start()
         
         except Exception as e:
             error_msg = f"音声入力エラー: {str(e)}"
             print(error_msg)
             self.ui.set_status(error_msg, "red")
-    
+
+    def _run_voice_recognition(self):
+        """音声認識を別スレッドで実行"""
+        try:
+            recognized_text = self.speech_module.recognize_once()
+            
+            if recognized_text:
+                # コールバックはSpeechModule内で呼ばれるか、ここで直接処理する
+                # SpeechModuleのrecognize_onceはコールバックを呼ばないのでここで呼ぶ
+                self.on_speech_recognized(recognized_text)
+            else:
+                self.ui.set_status("音声を認識できませんでした", "red")
+        except Exception as e:
+            print(f"音声認識スレッドエラー: {e}")
+            self.ui.set_status("音声認識エラー", "red")    
     def toggle_tts(self, enabled):
         """TTS ON/OFFを切り替え"""
         self.tts_enabled = enabled
