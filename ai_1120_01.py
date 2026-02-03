@@ -18,15 +18,15 @@ except ImportError:
 class AIModule:
     # 利用可能なGeminiモデル一覧（2026年最新）
     AVAILABLE_MODELS = [
-        ("gemini-3-flash", "Gemini 3 Flash ⚡ (最新・推奨)"),
-        ("gemini-3-pro", "Gemini 3 Pro (最高性能)"),
-        ("gemini-2.5-flash", "Gemini 2.5 Flash (高速)"),
-        ("gemini-2.5-pro", "Gemini 2.5 Pro (高精度)"),
-        ("gemini-2.5-flash-lite", "Gemini 2.5 Flash Lite (低コスト)"),
+        ("gemini-3-flash-preview", "Gemini 3 Flash Preview ⚡ (最新)"),
+        ("gemini-3-pro-preview", "Gemini 3 Pro Preview (最高性能)"),
+        ("gemini-2.5-flash", "Gemini 2.5 Flash (高速・安定)"),
+        ("gemini-2.5-pro", "Gemini 2.5 Pro (高精度・安定)"),
         ("gemini-2.0-flash", "Gemini 2.0 Flash (安定版)"),
+        ("gemini-2.0-flash-lite", "Gemini 2.0 Flash Lite (低コスト)"),
     ]
     
-    def __init__(self, model="gemini-3-flash"):
+    def __init__(self, model="gemini-3-flash-preview"):
         """
         AIモジュールの初期化
         

@@ -16,8 +16,8 @@ from PIL import ImageGrab
 class SENPAI_Controller:
     def __init__(self):
         """コントローラーの初期化"""
-        # AIモジュール初期化（デフォルトモデル: gemini-3-flash）
-        self.ai_module = AIModule(model="gemini-3-flash")
+        # AIモジュール初期化（デフォルトモデル: gemini-3-flash-preview）
+        self.ai_module = AIModule(model="gemini-3-flash-preview")
         # 音声認識モジュールの初期化（コールバックを指定）
         self.speech_module = SpeechModule(callback=self.on_speech_recognized)
         self.tts_module = TTSModule()
