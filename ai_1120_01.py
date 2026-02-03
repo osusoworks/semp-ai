@@ -1,31 +1,58 @@
 """
 AI Module for SENP_AI (Version 1120_01)
-モデル選択機能付きAI分析モジュール
+Google Gemini専用 AI分析モジュール
+ハッカソン対応版
 """
 
 import os
-import base64
-from openai import OpenAI
+from PIL import Image
+
+# Google Generative AI (Gemini) のインポート
+try:
+    import google.generativeai as genai
+except ImportError:
+    print("google-generativeai がインストールされていません")
+    print("pip install google-generativeai を実行してください")
+    genai = None
 
 class AIModule:
-    # 利用可能なモデル一覧
+    # 利用可能なGeminiモデル一覧（2026年最新）
     AVAILABLE_MODELS = [
-        ("gpt-4o", "GPT-4o (安定・推奨)"),
-        ("gpt-4o-mini", "GPT-4o Mini (高速・低コスト)"),
-        ("gpt-4-turbo", "GPT-4 Turbo"),
-        ("gpt-4", "GPT-4"),
+        ("gemini-3-flash", "Gemini 3 Flash ⚡ (最新・推奨)"),
+        ("gemini-3-pro", "Gemini 3 Pro (最高性能)"),
+        ("gemini-2.5-flash", "Gemini 2.5 Flash (高速)"),
+        ("gemini-2.5-pro", "Gemini 2.5 Pro (高精度)"),
+        ("gemini-2.5-flash-lite", "Gemini 2.5 Flash Lite (低コスト)"),
+        ("gemini-2.0-flash", "Gemini 2.0 Flash (安定版)"),
     ]
     
-    def __init__(self, model="gpt-4o"):
+    def __init__(self, model="gemini-3-flash"):
         """
         AIモジュールの初期化
         
         Args:
-            model: 使用するGPTモデル名（デフォルト: gpt-5.1-instant）
+            model: 使用するGeminiモデル名（デフォルト: gemini-3-flash）
         """
-        self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        # APIキーの取得
+        api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+        
+        if not api_key:
+            raise ValueError(
+                "GOOGLE_API_KEY または GEMINI_API_KEY 環境変数が設定されていません。\n"
+                "Google AI Studio (https://aistudio.google.com/) でAPIキーを取得してください。"
+            )
+        
+        if genai is None:
+            raise ImportError(
+                "google-generativeai ライブラリがインストールされていません。\n"
+                "pip install google-generativeai を実行してください。"
+            )
+        
+        # Gemini APIの設定
+        genai.configure(api_key=api_key)
         self.model = model
-        print(f"AI Module initialized with model: {model}")
+        self.genai_model = genai.GenerativeModel(model)
+        print(f"AI Module initialized with Gemini model: {model}")
     
     def set_model(self, model):
         """
@@ -35,6 +62,7 @@ class AIModule:
             model: 新しいモデル名
         """
         self.model = model
+        self.genai_model = genai.GenerativeModel(model)
         print(f"Model changed to: {model}")
     
     def get_model(self):
@@ -45,19 +73,6 @@ class AIModule:
     def get_available_models():
         """利用可能なモデルのリストを取得"""
         return AIModule.AVAILABLE_MODELS
-    
-    def encode_image(self, image_path):
-        """
-        画像をBase64エンコード
-        
-        Args:
-            image_path: 画像ファイルのパス
-            
-        Returns:
-            Base64エンコードされた画像データ
-        """
-        with open(image_path, "rb") as image_file:
-            return base64.b64encode(image_file.read()).decode('utf-8')
     
     def analyze_screen(self, screenshot_path, user_question):
         """
@@ -76,16 +91,11 @@ class AIModule:
             }
         """
         try:
-            # 画像をBase64エンコード
-            base64_image = self.encode_image(screenshot_path)
+            # 画像を読み込み
+            image = Image.open(screenshot_path)
             
-            # OpenAI APIでビジョン分析
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": """あなたはSENP_AIという画面分析AIアシスタントです。
+            # システムプロンプト
+            system_prompt = """あなたはSENP_AIという画面分析AIアシスタントです。
 ユーザーの画面を見て、質問に丁寧に答えてください。
 
 回答のガイドライン:
@@ -93,29 +103,15 @@ class AIModule:
 - 具体的で分かりやすい説明
 - 必要に応じて手順を示す
 - 日本語で回答
-- 親切で丁寧な口調"""
-                    },
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": user_question
-                            },
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/png;base64,{base64_image}"
-                                }
-                            }
-                        ]
-                    }
-                ],
-                max_tokens=2000,
-                temperature=0.7
-            )
+- 親切で丁寧な口調
+- 重要: 出力に「**」などのマークダウンによる強調（太字）は使用しないでください。プレーンテキストで回答してください。"""
             
-            answer = response.choices[0].message.content
+            # Gemini APIで画像分析
+            full_prompt = f"{system_prompt}\n\nユーザーの質問: {user_question}"
+            
+            response = self.genai_model.generate_content([full_prompt, image])
+            
+            answer = response.text
             
             return {
                 "success": True,
@@ -135,16 +131,19 @@ class AIModule:
 
 # テスト用
 if __name__ == "__main__":
-    print("=== SENP_AI - AI Module Test ===")
+    print("=== SENP_AI - Gemini AI Module Test ===")
     print("\nAvailable Models:")
     for model_id, model_name in AIModule.get_available_models():
         print(f"  - {model_id}: {model_name}")
     
-    # モジュール初期化
-    ai = AIModule()
-    print(f"\nCurrent model: {ai.get_model()}")
-    
-    # モデル変更テスト
-    ai.set_model("gpt-4o-mini")
-    print(f"Changed model: {ai.get_model()}")
-
+    # モジュール初期化（環境変数が設定されている場合のみ）
+    api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    if api_key:
+        ai = AIModule()
+        print(f"\nCurrent model: {ai.get_model()}")
+        
+        # モデル変更テスト
+        ai.set_model("gemini-1.5-flash")
+        print(f"Changed model: {ai.get_model()}")
+    else:
+        print("\n環境変数 GOOGLE_API_KEY または GEMINI_API_KEY が設定されていません")

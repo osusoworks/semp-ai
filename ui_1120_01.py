@@ -8,21 +8,21 @@ from tkinter import ttk, scrolledtext
 import threading
 
 class SENPAI_UI:
-    def __init__(self, available_models, on_screenshot_callback, on_question_callback, 
+    def __init__(self, available_models, on_question_callback, 
                  on_voice_input_callback, on_tts_toggle_callback, on_model_change_callback):
         """
         UIの初期化
         
         Args:
             available_models: 利用可能なモデルのリスト [(id, name), ...]
-            on_screenshot_callback: スクリーンショットボタンのコールバック
+
             on_question_callback: 質問送信のコールバック
             on_voice_input_callback: 音声入力のコールバック
             on_tts_toggle_callback: TTS ON/OFFのコールバック
             on_model_change_callback: モデル変更のコールバック
         """
         self.available_models = available_models
-        self.on_screenshot = on_screenshot_callback
+
         self.on_question = on_question_callback
         self.on_voice_input = on_voice_input_callback
         self.on_tts_toggle = on_tts_toggle_callback
@@ -48,7 +48,9 @@ class SENPAI_UI:
         self.root.resizable(True, True)
         
         # 最小サイズを調整（必要に応じて）
-        self.root.minsize(400, 300)
+        # 最小サイズを調整（必要に応じて）
+        # self.root.minsize(400, 300)
+        self.root.minsize(10, 10) # 自由に縮小できるように最小サイズを小さく設定
         
         self.tts_enabled = tk.BooleanVar(value=True)
         self.selected_model = tk.StringVar(value=available_models[0][0])
@@ -76,14 +78,7 @@ class SENPAI_UI:
         left_buttons = ttk.Frame(top_frame)
         left_buttons.pack(side=tk.LEFT)
         
-        # スクリーンショットボタン
-        self.screenshot_btn = ttk.Button(
-            left_buttons,
-            text="📸 スクリーンショット",
-            command=self._on_screenshot_click
-        )
-        self.screenshot_btn.pack(side=tk.LEFT, padx=(0, 10))
-        
+
         # TTS ON/OFFトグル
         self.tts_check = ttk.Checkbutton(
             left_buttons,
@@ -187,11 +182,7 @@ class SENPAI_UI:
         """Returnキー押下時"""
         self._on_question_submit()
     
-    def _on_screenshot_click(self):
-        """スクリーンショットボタンクリック"""
-        self.set_status("スクリーンショット撮影中...", "blue")
-        threading.Thread(target=self.on_screenshot, daemon=True).start()
-    
+
     def _on_question_submit(self):
         """質問送信"""
         question = self.input_entry.get()

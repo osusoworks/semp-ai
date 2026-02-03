@@ -16,7 +16,9 @@ class SimpleUIModule:
     def __init__(self, 
                  question_callback: Optional[Callable[[str], None]] = None,
                  save_favorite_callback: Optional[Callable[[str, str], None]] = None,
-                 show_library_callback: Optional[Callable[[], None]] = None):
+                 show_library_callback: Optional[Callable[[], None]] = None,
+                 model_change_callback: Optional[Callable[[str], None]] = None,
+                 available_models: Optional[list] = None):
         """
         初期化
         
@@ -28,6 +30,8 @@ class SimpleUIModule:
         self.question_callback = question_callback
         self.save_favorite_callback = save_favorite_callback
         self.show_library_callback = show_library_callback
+        self.model_change_callback = model_change_callback
+        self.available_models = available_models or []
         
         # UI状態管理
         self.current_question = ""
@@ -42,6 +46,8 @@ class SimpleUIModule:
         self.ask_button = None
         self.clear_button = None
         self.end_button = None
+        self.model_var = None
+        self.model_combo = None
         
         # 初期化
         self._create_window()
@@ -54,7 +60,7 @@ class SimpleUIModule:
         self.root = tk.Tk()
         self.root.title("SENPAI")
         self.root.geometry("600x500")
-        self.root.minsize(500, 400)
+        self.root.minsize(10, 10) # 自由に縮小できるように最小サイズを小さく設定
         self.root.configure(bg='#FFFFFF')
         
         # ウィンドウを中央に配置
@@ -143,6 +149,34 @@ class SimpleUIModule:
             width=10
         )
         self.ask_button.pack(side=tk.RIGHT)
+
+        # モデル選択（利用可能なモデルがある場合）
+        if self.available_models:
+            model_frame = tk.Frame(top_button_frame, bg='#FFFFFF')
+            model_frame.pack(side=tk.RIGHT, padx=(0, 10))
+            
+            tk.Label(
+                model_frame, 
+                text="🤖", 
+                bg='#FFFFFF',
+                font=('Yu Gothic UI', 10)
+            ).pack(side=tk.LEFT, padx=(0, 2))
+            
+            self.model_var = tk.StringVar()
+            self.model_combo = ttk.Combobox(
+                model_frame,
+                textvariable=self.model_var,
+                width=20,
+                state="readonly"
+            )
+            # 値の設定 (idではなく表示名をリストにすることもできるが、ここではIDを表示)
+            self.model_combo['values'] = [model[1] for model in self.available_models] if isinstance(self.available_models[0], tuple) else self.available_models
+            
+            if self.available_models:
+                self.model_combo.current(0)
+                
+            self.model_combo.pack(side=tk.LEFT)
+            self.model_combo.bind("<<ComboboxSelected>>", self._on_model_changed)
         
         # 3. 回答表示エリア
         self.answer_text = tk.Text(
@@ -233,6 +267,16 @@ class SimpleUIModule:
             self.input_mode = "text"
             self.mode_button.configure(text="🎤 音声認識")
             messagebox.showinfo("入力モード", "テキスト入力モードに切り替えました")
+
+    def _on_model_changed(self, event):
+        """モデル変更時の処理"""
+        if self.model_change_callback and self.model_combo:
+            selected_index = self.model_combo.current()
+            if selected_index >= 0 and selected_index < len(self.available_models):
+                # タプルの場合はIDを渡す
+                selected_model = self.available_models[selected_index]
+                model_id = selected_model[0] if isinstance(selected_model, tuple) else selected_model
+                self.model_change_callback(model_id)
     
     def _send_question(self):
         """質問を送信"""

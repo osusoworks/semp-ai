@@ -2,39 +2,97 @@
 """
 AI解析モジュール（座標精度大幅改善版）
 座標系統一、マルチモニター対応、認識精度向上を実装
+OpenAI (GPT-4o) および Google Gemini 対応
 """
 
 import os
 import json
 import base64
+import traceback
 from typing import Optional, Dict, Any, Tuple
 from PIL import Image, ImageGrab
 import tkinter as tk
 
 
 class AIModuleImproved:
-    """AI解析を担当するモジュール（座標精度大幅改善版）"""
+    """AI解析を担当するモジュール（座標精度大幅改善版、マルチモデル対応）"""
     
     def __init__(self):
         """初期化"""
-        self.api_key = os.getenv('OPENAI_API_KEY')
-        self.client = None
+        self.openai_api_key = os.getenv('OPENAI_API_KEY')
+        self.google_api_key = os.getenv('GOOGLE_API_KEY') or os.getenv('GEMINI_API_KEY')
+        
+        self.openai_client = None
+        self.genai_available = False
         
         # 座標精度改善のための設定
         self.screen_info = self._get_screen_info()
         
-        if self.api_key:
+        # デフォルト設定
+        self.provider = "openai"  # 'openai' or 'gemini'
+        self.model_name = "gpt-4o"  # デフォルトをgpt-4oに変更
+        
+        self._init_services()
+
+    def _init_services(self):
+        """AIサービスの初期化"""
+        # OpenAI初期化
+        if self.openai_api_key:
             try:
                 from openai import OpenAI
-                self.client = OpenAI()
-                print("AI解析モジュール（座標精度改善版）が初期化されました")
-                print(f"画面情報: {self.screen_info}")
+                self.openai_client = OpenAI()
+                print("OpenAIクライアントが初期化されました")
             except ImportError:
                 print("OpenAIライブラリがインストールされていません")
-                self.client = None
+        
+        # Gemini初期化
+        if self.google_api_key:
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=self.google_api_key)
+                self.genai_available = True
+                print("Gemini APIが初期化されました")
+            except ImportError:
+                print("google-generativeaiライブラリがインストールされていません")
+        
+        # 利用可能なプロバイダーに基づいてデフォルトを設定
+        if self.openai_client:
+            self.provider = "openai"
+            self.model_name = "gpt-5.2"  # 最新モデルをデフォルトに
+        elif self.genai_available:
+            self.provider = "gemini"
+            self.model_name = "gemini-3-pro"  # 最新モデルをデフォルトに
         else:
-            print("OpenAI APIキーが設定されていません")
-    
+            print("警告: AIプロバイダーが利用できません")
+
+        print(f"現在のアクティブモデル: Provider={self.provider}, Model={self.model_name}")
+        print(f"画面情報: {self.screen_info}")
+
+    def set_model(self, provider: str, model_name: str) -> bool:
+        """
+        使用するモデルを変更
+        
+        Args:
+            provider: 'openai' または 'gemini'
+            model_name: モデル名 (例: 'gpt-4o', 'gemini-1.5-pro')
+            
+        Returns:
+            変更に成功した場合はTrue
+        """
+        if provider == "openai" and self.openai_client:
+            self.provider = "openai"
+            self.model_name = model_name
+            print(f"モデルをOpenAI ({model_name}) に変更しました")
+            return True
+        elif provider == "gemini" and self.genai_available:
+            self.provider = "gemini"
+            self.model_name = model_name
+            print(f"モデルをGemini ({model_name}) に変更しました")
+            return True
+        else:
+            print(f"指定されたプロバイダー({provider})は利用できません")
+            return False
+
     def _get_screen_info(self) -> Dict[str, Any]:
         """
         画面情報を取得（座標計算精度向上のため）
@@ -191,6 +249,7 @@ class AIModuleImproved:
     def analyze_screenshot(self, screenshot_path: str, question: str) -> Optional[Dict[str, Any]]:
         """
         スクリーンショットを解析（座標精度大幅改善版）
+        設定されたプロバイダーとモデルを使用します
         
         Args:
             screenshot_path: スクリーンショットのファイルパス
@@ -199,7 +258,21 @@ class AIModuleImproved:
         Returns:
             解析結果の辞書
         """
-        if not self.client:
+        if self.provider == "openai":
+            return self._analyze_with_openai(screenshot_path, question)
+        elif self.provider == "gemini":
+            return self._analyze_with_gemini(screenshot_path, question)
+        else:
+            print("有効なAIプロバイダーが設定されていません")
+            # フォールバック: 設定を再確認
+            self._init_services()
+            if self.provider:
+                return self.analyze_screenshot(screenshot_path, question)
+            return None
+
+    def _analyze_with_openai(self, screenshot_path: str, question: str) -> Optional[Dict[str, Any]]:
+        """OpenAIを使用して解析"""
+        if not self.openai_client:
             print("OpenAIクライアントが利用できません")
             return None
         
@@ -216,11 +289,11 @@ class AIModuleImproved:
             # 強化プロンプトを作成
             prompt = self._create_enhanced_prompt(question, image_width, image_height)
             
-            print("座標精度改善版AI解析を実行中...")
+            print(f"OpenAI ({self.model_name}) で解析を実行中...")
             
             # OpenAI APIを呼び出し
-            response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+            response = self.openai_client.chat.completions.create(
+                model=self.model_name,
                 messages=[
                     {
                         "role": "user",
@@ -240,34 +313,77 @@ class AIModuleImproved:
                     }
                 ],
                 max_tokens=1000,
-                temperature=0.1  # 一貫性のために低い値
+                temperature=0.1
             )
             
             # レスポンスを解析
             response_text = response.choices[0].message.content
             print(f"AI解析レスポンス: {response_text}")
             
-            # JSONを抽出
-            result = self._extract_json_from_response(response_text)
-            
-            if result:
-                # 座標を画面座標系に変換
-                converted_result = self._convert_coordinates_to_screen(
-                    result, image_width, image_height
-                )
-                
-                print(f"座標変換結果: {converted_result}")
-                return converted_result
-            else:
-                print("JSON解析に失敗しました")
-                return None
+            # JSONを抽出して処理
+            return self._process_response(response_text, image_width, image_height)
                 
         except Exception as e:
-            print(f"AI解析エラー: {e}")
-            import traceback
+            print(f"AI解析エラー(OpenAI): {e}")
             traceback.print_exc()
             return None
-    
+
+    def _analyze_with_gemini(self, screenshot_path: str, question: str) -> Optional[Dict[str, Any]]:
+        """Geminiを使用して解析"""
+        if not self.genai_available:
+            print("Geminiクライアントが利用できません")
+            return None
+            
+        try:
+            import google.generativeai as genai
+            
+            # 画像の実際のサイズを取得
+            image_width, image_height = self._get_image_dimensions(screenshot_path)
+            print(f"解析対象画像サイズ: {image_width} x {image_height}")
+            
+            # 画像を読み込み (GeminiはPIL Imageを受け取れる)
+            img = Image.open(screenshot_path)
+            
+            # 強化プロンプトを作成
+            prompt = self._create_enhanced_prompt(question, image_width, image_height)
+            
+            print(f"Gemini ({self.model_name}) で解析を実行中...")
+            
+            # モデルの取得
+            model = genai.GenerativeModel(self.model_name)
+            
+            # 実行
+            response = model.generate_content([prompt, img])
+            
+            # レスポンスを解析
+            response_text = response.text
+            print(f"AI解析レスポンス(Gemini): {response_text}")
+            
+            # JSONを抽出して処理
+            return self._process_response(response_text, image_width, image_height)
+            
+        except Exception as e:
+            print(f"AI解析エラー(Gemini): {e}")
+            traceback.print_exc()
+            return None
+
+    def _process_response(self, response_text: str, image_width: int, image_height: int) -> Optional[Dict[str, Any]]:
+        """レスポンスからJSONを抽出して座標変換を行う共通処理"""
+        # JSONを抽出
+        result = self._extract_json_from_response(response_text)
+        
+        if result:
+            # 座標を画面座標系に変換
+            converted_result = self._convert_coordinates_to_screen(
+                result, image_width, image_height
+            )
+            
+            print(f"座標変換結果: {converted_result}")
+            return converted_result
+        else:
+            print("JSON解析に失敗しました")
+            return None
+
     def _extract_json_from_response(self, response_text: str) -> Optional[Dict[str, Any]]:
         """
         レスポンステキストからJSONを抽出
@@ -421,14 +537,16 @@ if __name__ == "__main__":
     # テスト実行
     ai_module = AIModuleImproved()
     
-    print("座標精度改善版AI解析モジュールのテストを開始します")
+    print("座標精度改善版AI解析モジュール（マルチモデル対応）のテストを開始します")
     print(f"画面情報: {ai_module.screen_info}")
     
-    if ai_module.client:
-        print("✅ OpenAIクライアント: 利用可能")
+    if ai_module.provider == "openai":
+        print(f"✅ OpenAIクライアント ({ai_module.model_name}): 利用可能")
+    elif ai_module.provider == "gemini":
+        print(f"✅ Geminiクライアント ({ai_module.model_name}): 利用可能")
     else:
-        print("❌ OpenAIクライアント: 利用不可")
-        print("   OPENAI_API_KEY環境変数を設定してください")
+        print("❌ AIクライアント: 利用不可")
+        print("   OPENAI_API_KEY または GOOGLE_API_KEY 環境変数を設定してください")
     
     # 座標変換のテスト
     test_result = {

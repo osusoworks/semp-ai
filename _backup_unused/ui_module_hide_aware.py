@@ -18,7 +18,8 @@ class UIModuleHideAware:
                  manual_screenshot_callback: Callable[[], None],
                  auto_screenshot_toggle_callback: Callable[[bool], None],
                  save_favorite_callback: Optional[Callable[[str, str], None]] = None,
-                 show_library_callback: Optional[Callable[[], None]] = None):
+                 show_library_callback: Optional[Callable[[], None]] = None,
+                 model_change_callback: Optional[Callable[[str], None]] = None):
         """
         初期化
         
@@ -27,6 +28,7 @@ class UIModuleHideAware:
             close_callback: アプリケーション終了時のコールバック
             manual_screenshot_callback: 手動スクリーンショット撮影時のコールバック
             auto_screenshot_toggle_callback: 自動スクリーンショット切り替え時のコールバック
+            model_change_callback: AIモデル変更時のコールバック
         """
         self.question_callback = question_callback
         self.close_callback = close_callback
@@ -34,6 +36,7 @@ class UIModuleHideAware:
         self.auto_screenshot_toggle_callback = auto_screenshot_toggle_callback
         self.save_favorite_callback = save_favorite_callback
         self.show_library_callback = show_library_callback
+        self.model_change_callback = model_change_callback
         
         # ライブラリ関連の状態
         self.current_question = ""
@@ -44,6 +47,7 @@ class UIModuleHideAware:
         self.root.title("AI HELP - UI非表示対応版")
         self.root.geometry("420x650")
         self.root.resizable(True, True)
+        self.root.minsize(10, 10) # 自由に縮小できるように最小サイズを小さく設定
         
         # ウィンドウを常に最前面に表示
         self.root.attributes('-topmost', True)
@@ -127,6 +131,37 @@ class UIModuleHideAware:
             command=self._on_auto_screenshot_toggle
         )
         self.auto_screenshot_check.pack(anchor=tk.W)
+        
+        # AIモデル設定フレーム
+        model_frame = tk.Frame(main_frame, bg='#4ECDC4')
+        model_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        tk.Label(
+            model_frame, 
+            text="🧠 モデル:", 
+            font=('Arial', 10),
+            bg='#4ECDC4',
+            fg='white'
+        ).pack(side=tk.LEFT)
+        
+        self.model_var = tk.StringVar()
+        self.model_combo = ttk.Combobox(
+            model_frame,
+            textvariable=self.model_var,
+            width=28,
+            state="readonly"
+        )
+        self.model_combo['values'] = [
+            "gpt-5.2 (OpenAI)",
+            "gpt-5-mini (OpenAI)",
+            "gpt-4o (OpenAI)", 
+            "gemini-3-pro (Gemini)", 
+            "gemini-3-flash (Gemini)",
+            "gemini-1.5-pro (Gemini)"
+        ]
+        self.model_combo.current(0)
+        self.model_combo.pack(side=tk.LEFT, padx=(5, 0))
+        self.model_combo.bind("<<ComboboxSelected>>", self._on_model_changed)
         
         # 手動スクリーンショット撮影フレーム
         screenshot_frame = tk.Frame(main_frame, bg='#4ECDC4')
@@ -441,6 +476,18 @@ class UIModuleHideAware:
         # コールバックを呼び出し
         if self.auto_screenshot_toggle_callback:
             self.auto_screenshot_toggle_callback(enabled)
+    
+    def _on_model_changed(self, event):
+        """AIモデルが変更された時の処理"""
+        selected = self.model_var.get()
+        print(f"モデル変更要求: {selected}")
+        
+        if self.model_change_callback:
+            # プロバイダーとモデル名を分離する処理はコントローラーなどで行うか、ここで簡易パース
+            # ここではそのまま渡す
+            self.model_change_callback(selected)
+            # ステータス更新はコントローラーからのフィードバック待ちが理想だが、一旦ここで表示
+            self.set_status(f"モデルを {selected.split(' ')[0]} に変更しました")
     
     def _take_manual_screenshot(self):
         """手動スクリーンショット撮影ボタンが押された時"""

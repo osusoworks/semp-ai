@@ -33,7 +33,8 @@ class MainControllerFinalUIHide:
             self.on_text_question, 
             self.on_app_close,
             self.on_manual_screenshot_request,
-            self.on_auto_screenshot_toggle
+            self.on_auto_screenshot_toggle,
+            model_change_callback=self.on_model_change
         )
         
         # UI非表示対応版キャプチャモジュールを初期化
@@ -112,6 +113,30 @@ class MainControllerFinalUIHide:
         
         print("✅ シンプル矢印・永続表示版アプリケーションが停止されました")
     
+    def on_model_change(self, model_selection: str):
+        """モデル変更時のコールバック"""
+        print(f"モデル変更リクエスト: {model_selection}")
+        
+        provider = "openai"
+        model_name = "gpt-5.2"  # デフォルト更新
+        
+        if "(OpenAI)" in model_selection:
+            provider = "openai"
+            model_name = model_selection.split(" (")[0]
+        elif "(Gemini)" in model_selection:
+            provider = "gemini"
+            model_name = model_selection.split(" (")[0]
+            
+        success = self.ai_module.set_model(provider, model_name)
+        
+        if success:
+            self.ui_module.set_status(f"AI: {model_name} に変更しました")
+            print(f"モデル変更成功: {provider} - {model_name}")
+        else:
+            self.ui_module.set_status(f"エラー: {model_name} 利用不可")
+            self.ui_module.set_answer(f"選択されたモデル ({model_name}) は利用できません。\\nAPIキーの設定を確認してください。")
+            print(f"モデル変更失敗: {provider} - {model_name}")
+
     def on_manual_screenshot_request(self):
         """手動スクリーンショット撮影が要求された時"""
         # 既存の矢印を非表示（手動スクリーンショットのため）

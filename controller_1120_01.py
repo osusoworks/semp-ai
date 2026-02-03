@@ -16,8 +16,8 @@ from PIL import ImageGrab
 class SENPAI_Controller:
     def __init__(self):
         """コントローラーの初期化"""
-        # AIモジュール初期化（デフォルトモデル: gpt-4o）
-        self.ai_module = AIModule(model="gpt-4o")
+        # AIモジュール初期化（デフォルトモデル: gemini-3-flash）
+        self.ai_module = AIModule(model="gemini-3-flash")
         # 音声認識モジュールの初期化（コールバックを指定）
         self.speech_module = SpeechModule(callback=self.on_speech_recognized)
         self.tts_module = TTSModule()
@@ -25,7 +25,6 @@ class SENPAI_Controller:
         # UI初期化
         self.ui = SENPAI_UI(
             available_models=AIModule.get_available_models(),
-            on_screenshot_callback=self.take_screenshot,
             on_question_callback=self.process_question,
             on_voice_input_callback=self.handle_voice_input,
             on_tts_toggle_callback=self.toggle_tts,
@@ -36,12 +35,7 @@ class SENPAI_Controller:
         self.tts_enabled = True
         
         # 起動メッセージ
-        self.ui.add_message(
-            "assistant",
-            "こんにちは！SENP_AIです。\n画面のスクリーンショットを撮って、質問してください。\n\n🤖 モデル選択で、使用するAIモデルを変更できます。",
-            self._get_timestamp(),
-            model=self.ai_module.get_model()
-        )
+
         self.ui.set_status("準備完了", "green")
     
     def _get_timestamp(self):
@@ -79,7 +73,7 @@ class SENPAI_Controller:
             
             # UIを一時的に非表示にしてスクリーンショットを撮影
             self.ui.hide_window()
-            time.sleep(0.2)  # ウィンドウが消えるのを待つ
+            time.sleep(0.05)  # ウィンドウが消えるのを短時間待つ
             
             try:
                 self.take_screenshot()
@@ -122,7 +116,7 @@ class SENPAI_Controller:
             self.ui.set_input_text(text)
             self.ui.set_status("音声認識完了", "green")
             # 自動的に質問を送信
-            time.sleep(0.5)
+            time.sleep(0.05) # レスポンス短縮
             self.process_question(text)
 
     def handle_voice_input(self):

@@ -22,6 +22,7 @@ class SpeechModule:
         """
         self.callback = callback
         self.recognizer = sr.Recognizer()
+        self.recognizer.pause_threshold = 0.5 # 発話終了の判定を早くする
         self.microphone = None
         self.listening = False
         self.listen_thread: Optional[threading.Thread] = None
@@ -124,7 +125,7 @@ class SpeechModule:
             
             with self.microphone as source:
                 # 環境ノイズを調整
-                self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
+                self.recognizer.adjust_for_ambient_noise(source, duration=0.1)
                 
                 # 音声を録音
                 audio = self.recognizer.listen(source, timeout=timeout, phrase_time_limit=10)

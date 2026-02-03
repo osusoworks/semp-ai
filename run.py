@@ -16,33 +16,33 @@ except ImportError as e:
     sys.exit(1)
 
 def check_api_key():
-    """OpenAI APIキーの確認"""
-    api_key = os.environ.get("OPENAI_API_KEY")
+    """Google Gemini APIキーの確認"""
+    api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        print("エラー: OPENAI_API_KEY環境変数が設定されていません。")
+        print("エラー: GOOGLE_API_KEY または GEMINI_API_KEY 環境変数が設定されていません。")
         print("\n以下の手順で設定してください:")
-        print("1. OpenAIのAPIキーを取得")
+        print("1. Google AI Studio (https://aistudio.google.com/) でAPIキーを取得")
         print("2. 環境変数を設定:")
-        print("   Windows: set OPENAI_API_KEY=your-api-key")
-        print("   Mac/Linux: export OPENAI_API_KEY=your-api-key")
+        print("   Windows: set GOOGLE_API_KEY=your-api-key")
+        print("   Mac/Linux: export GOOGLE_API_KEY=your-api-key")
         sys.exit(1)
 
 def main():
     """メイン関数"""
     print("=" * 60)
-    print("SENP_AI - AI Assistant (Version 1120_01)")
+    print("SENP_AI - AI Assistant (Gemini Version)")
     print("=" * 60)
     print()
     
     # APIキーチェック
     check_api_key()
     
-    print("✓ OpenAI APIキー確認完了")
+    print("✓ Google Gemini APIキー確認完了")
     print("✓ アプリケーション起動中...")
     print()
-    print("新機能:")
-    print("  - GPT-5.1シリーズ対応")
-    print("  - UIでモデル選択可能")
+    print("Powered by Google Gemini:")
+    print("  - Gemini 3 Flash (最新・推奨)")
+    print("  - Gemini 3 Pro / 2.5シリーズも選択可能")
     print("  - 音声入力・音声出力対応")
     print()
     

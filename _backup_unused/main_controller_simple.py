@@ -123,10 +123,26 @@ class SimpleMainController:
             
             # シンプルUIモジュールを初期化
             print("シンプルUIモジュール初期化中...")
+            # モデルリストを取得
+            available_models = []
+            if hasattr(self.ai_module, 'get_available_models'):
+                available_models = self.ai_module.get_available_models()
+            else:
+                # デフォルトのモデルリスト
+                available_models = [
+                    ("gpt-5.1-instant", "GPT-5.1 Instant ⚡"),
+                    ("gpt-4o", "GPT-4o"),
+                    ("gemini-1.5-pro", "Gemini 1.5 Pro")
+                ]
+            
+            # シンプルUIモジュールを初期化
+            print("シンプルUIモジュール初期化中...")
             self.ui_module = SimpleUIModule(
                 question_callback=self.on_text_question,
                 save_favorite_callback=self.on_save_favorite,
-                show_library_callback=self.on_show_library
+                show_library_callback=self.on_show_library,
+                model_change_callback=self.on_model_change,
+                available_models=available_models
             )
             
             # UI非表示対応版キャプチャモジュールを初期化
@@ -187,6 +203,35 @@ class SimpleMainController:
             
         except Exception as e:
             print(f"機能状態更新エラー: {e}")
+
+    def on_model_change(self, model_id: str):
+        """モデル変更時の処理"""
+        print(f"モデル変更要求: {model_id}")
+        if self.ai_module:
+            try:
+                # プロバイダーを判別
+                provider = "openai"
+                if "gemini" in model_id:
+                    provider = "gemini"
+                
+                # モデル設定（AIモジュールのメソッドに合わせて調整）
+                if hasattr(self.ai_module, 'set_model'):
+                    # set_model(provider, model_name) の形式の場合
+                    try:
+                        self.ai_module.set_model(provider, model_id)
+                        self.ui_module.set_status(f"モデルを {model_id} に変更しました")
+                    except TypeError:
+                        # 引数が違う可能性（旧AIモジュールなど）
+                        try:
+                            self.ai_module.set_model(model_id)
+                            self.ui_module.set_status(f"モデルを {model_id} に変更しました")
+                        except Exception as e:
+                             print(f"モデル設定エラー(型不一致): {e}")
+                else:
+                    print("AIモジュールにモデル設定メソッドがありません")
+            except Exception as e:
+                print(f"モデル変更エラー: {e}")
+                self.ui_module.set_answer(f"モデル変更中にエラーが発生しました: {e}")
     
     def on_save_favorite(self, question: str, answer: str):
         """お気に入り保存処理"""

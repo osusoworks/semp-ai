@@ -1,0 +1,30 @@
+2026-02-01 16:22:15.040653: Starting cleanup script...
+2026-02-01 16:22:15.042736: Created directory: _backup_unused
+2026-02-01 16:22:15.043792: Moved: ai_1120_02.py
+2026-02-01 16:22:15.044341: Moved: ai_module_improved.py
+2026-02-01 16:22:15.044923: Moved: capture_module_ui_aware.py
+2026-02-01 16:22:15.046227: Moved: cleanup_project.py
+2026-02-01 16:22:15.046765: Moved: controller_1120_02.py
+2026-02-01 16:22:15.047768: Moved: coordinate_verification_module.py
+2026-02-01 16:22:15.047768: Moved: hybrid_coordinate_detector.py
+2026-02-01 16:22:15.047768: Moved: library_ui_improved.py
+2026-02-01 16:22:15.049046: Moved: main_controller_final_ui_hide.py
+2026-02-01 16:22:15.049553: Moved: main_controller_simple.py
+2026-02-01 16:22:15.049553: Moved: main_controller_with_simple_library.py
+2026-02-01 16:22:15.051013: Moved: ocr_text_matching_module.py
+2026-02-01 16:22:15.052016: Moved: overlay_module_clean.py
+2026-02-01 16:22:15.052016: Moved: overlay_module_improved.py
+2026-02-01 16:22:15.052016: Moved: README_CLEANUP.md
+2026-02-01 16:22:15.053285: Moved: relative_coordinate_module.py
+2026-02-01 16:22:15.054374: Moved: run_context.py
+2026-02-01 16:22:15.054374: Moved: run_simple_clean.py
+2026-02-01 16:22:15.055377: Moved: run_simple_library.py
+2026-02-01 16:22:15.055377: Moved: run_ui_hide.py
+2026-02-01 16:22:15.055377: Moved: simple_library.py
+2026-02-01 16:22:15.056747: Moved: speech_module.py
+2026-02-01 16:22:15.057286: Moved: test_hybrid_system.py
+2026-02-01 16:22:15.057286: Moved: ui_1120_02.py
+2026-02-01 16:22:15.058991: Moved: ui_module_hide_aware.py
+2026-02-01 16:22:15.059498: Moved: ui_module_simple.py
+2026-02-01 16:22:15.059498: Moved: user_feedback_module.py
+2026-02-01 16:22:15.060948: Cleanup complete. Moved 27 files.
