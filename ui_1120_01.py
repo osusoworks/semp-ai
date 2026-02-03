@@ -1,312 +1,268 @@
 """
 UI Module for SENP_AI (Version 1120_01)
-モデル選択機能付きUIモジュール
+モデル選択機能付きUIモジュール - CustomTkinter Modern Design
 """
 
 import tkinter as tk
-from tkinter import ttk, scrolledtext
+from tkinter import font
+import customtkinter as ctk
 import threading
+
+# CustomTkinterの設定
+ctk.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
+ctk.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
 class SENPAI_UI:
     def __init__(self, available_models, on_question_callback, 
                  on_voice_input_callback, on_tts_toggle_callback, on_model_change_callback):
         """
         UIの初期化
-        
-        Args:
-            available_models: 利用可能なモデルのリスト [(id, name), ...]
-
-            on_question_callback: 質問送信のコールバック
-            on_voice_input_callback: 音声入力のコールバック
-            on_tts_toggle_callback: TTS ON/OFFのコールバック
-            on_model_change_callback: モデル変更のコールバック
         """
         self.available_models = available_models
-
         self.on_question = on_question_callback
         self.on_voice_input = on_voice_input_callback
         self.on_tts_toggle = on_tts_toggle_callback
         self.on_model_change = on_model_change_callback
         
-        self.root = tk.Tk()
+        # メインウィンドウの設定
+        self.root = ctk.CTk()
         self.root.title("SENP_AI - AI Assistant")
         
         # 画面サイズを取得して30%のサイズを計算
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         
-        window_width = int(screen_width * 0.3)
-        window_height = int(screen_height * 0.3)
+        window_width = int(screen_width * 0.25)
+        window_height = int(screen_height * 0.35)
         
         # ウィンドウサイズと位置を設定（画面中央に配置）
         x_position = int((screen_width - window_width) / 2)
         y_position = int((screen_height - window_height) / 2)
         
         self.root.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
+        self.root.minsize(300, 400) # 最小サイズを小さく設定
+        self.root.resizable(True, True) # リサイズ許可
         
-        # リサイズ可能にする
-        self.root.resizable(True, True)
-        
-        # 最小サイズを調整（必要に応じて）
-        # 最小サイズを調整（必要に応じて）
-        # self.root.minsize(400, 300)
-        self.root.minsize(10, 10) # 自由に縮小できるように最小サイズを小さく設定
-        
+        # 変数初期化
         self.tts_enabled = tk.BooleanVar(value=True)
-        self.selected_model = tk.StringVar(value=available_models[0][0])
+        # コンボボックス用の変数は文字列そのものを保持
+        self.selected_model_id = available_models[0][0] 
         self.is_recording = False
         
         self._create_widgets()
         
     def _create_widgets(self):
-        """ウィジェットの作成"""
+        """モダンなウィジェットの作成"""
         
-        # メインフレーム
-        main_frame = ttk.Frame(self.root, padding="10")
-        main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        # メインコンテナ（パディング用）
+        self.root.grid_columnconfigure(0, weight=1)
+        self.root.grid_rowconfigure(1, weight=1) # 履歴エリアを伸縮
         
-        self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=1)
-        main_frame.columnconfigure(0, weight=1)
-        main_frame.rowconfigure(1, weight=1)
-        
-        # トップバー（ボタンエリア）
-        top_frame = ttk.Frame(main_frame)
-        top_frame.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
-        
-        # 左側のボタングループ
-        left_buttons = ttk.Frame(top_frame)
-        left_buttons.pack(side=tk.LEFT)
-        
-
-        # TTS ON/OFFトグル
-        self.tts_check = ttk.Checkbutton(
-            left_buttons,
-            text="🔊 音声回答",
-            variable=self.tts_enabled,
-            command=self._on_tts_toggle
-        )
-        self.tts_check.pack(side=tk.LEFT, padx=(0, 10))
+        # 1. ヘッダーエリア（ボタン類）
+        header_frame = ctk.CTkFrame(self.root, corner_radius=0, fg_color="transparent")
+        header_frame.grid(row=0, column=0, sticky="ew", padx=20, pady=(15, 10))
         
         # モデル選択
-        model_frame = ttk.Frame(left_buttons)
-        model_frame.pack(side=tk.LEFT, padx=(0, 10))
+        self.models_dict = {name: id for id, name in self.available_models}
+        model_names = [name for _, name in self.available_models]
         
-        ttk.Label(model_frame, text="🤖 モデル:").pack(side=tk.LEFT, padx=(0, 5))
-        
-        self.model_combo = ttk.Combobox(
-            model_frame,
-            textvariable=self.selected_model,
-            values=[f"{name}" for _, name in self.available_models],
-            state="readonly",
-            width=30
+        self.model_combo = ctk.CTkComboBox(
+            header_frame,
+            values=model_names,
+            command=self._on_model_change,
+            width=250,
+            font=("Yu Gothic UI", 12)
         )
-        self.model_combo.pack(side=tk.LEFT)
-        self.model_combo.bind("<<ComboboxSelected>>", self._on_model_change)
+        self.model_combo.pack(side="left", padx=(0, 10))
+        # 初期値設定
+        self.model_combo.set(model_names[0])
         
-        # 右側のステータス
-        self.status_label = ttk.Label(top_frame, text="準備完了", foreground="green")
-        self.status_label.pack(side=tk.RIGHT)
-        
-        # 会話履歴エリア
-        history_frame = ttk.Frame(main_frame)
-        history_frame.grid(row=1, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-        history_frame.columnconfigure(0, weight=1)
-        history_frame.rowconfigure(0, weight=1)
-        
-        self.history_text = scrolledtext.ScrolledText(
-            history_frame,
-            wrap=tk.WORD,
-            font=("Yu Gothic UI", 10),
-            state=tk.DISABLED,
-            background="#f5f5f5"
+        # TTSスイッチ
+        self.tts_switch = ctk.CTkSwitch(
+            header_frame,
+            text="音声回答",
+            command=self._on_tts_toggle,
+            variable=self.tts_enabled,
+            onvalue=True,
+            offvalue=False,
+            font=("Yu Gothic UI", 12)
         )
-        self.history_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        self.tts_switch.pack(side="left", padx=10)
         
-        # テキストタグの設定
-        self.history_text.tag_config("user", foreground="#0066cc", font=("Yu Gothic UI", 10, "bold"))
-        self.history_text.tag_config("assistant", foreground="#333333", font=("Yu Gothic UI", 10))
-        self.history_text.tag_config("timestamp", foreground="#999999", font=("Yu Gothic UI", 8))
-        self.history_text.tag_config("model", foreground="#666666", font=("Yu Gothic UI", 8, "italic"))
-        
-        # 入力エリア
-        input_frame = ttk.Frame(main_frame)
-        input_frame.grid(row=2, column=0, sticky=(tk.W, tk.E), pady=(10, 0))
-        input_frame.columnconfigure(0, weight=1)
-        
-        # 入力欄とマイクボタンを含むフレーム
-        entry_container = ttk.Frame(input_frame)
-        entry_container.grid(row=0, column=0, sticky=(tk.W, tk.E))
-        entry_container.columnconfigure(0, weight=1)
-        
-        # テキスト入力欄
-        self.input_entry = ttk.Entry(
-            entry_container,
+        # ステータスラベル（右寄せ）
+        self.status_label = ctk.CTkLabel(
+            header_frame,
+            text="準備完了",
+            text_color="gray",
             font=("Yu Gothic UI", 11)
         )
-        self.input_entry.grid(row=0, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
+        self.status_label.pack(side="right")
+        
+        # 2. チャット履歴エリア
+        # NOTE: 色分け(tag)機能のため、CTkTextboxではなく標準Textをカスタマイズして使う
+        # テーマに合わせて背景色などを調整
+        
+        bg_color = self.root._apply_appearance_mode(ctk.ThemeManager.theme["CTkTextbox"]["fg_color"])
+        text_color = self.root._apply_appearance_mode(ctk.ThemeManager.theme["CTkTextbox"]["text_color"])
+        
+        self.history_frame = ctk.CTkFrame(self.root, corner_radius=10)
+        self.history_frame.grid(row=1, column=0, sticky="nsew", padx=20, pady=5)
+        self.history_frame.grid_columnconfigure(0, weight=1)
+        self.history_frame.grid_rowconfigure(0, weight=1)
+        
+        self.history_text = tk.Text(
+            self.history_frame,
+            wrap=tk.WORD,
+            font=("Yu Gothic UI", 11),
+            bg=bg_color,
+            fg=text_color,
+            bd=0,
+            highlightthickness=0,
+            padx=10,
+            pady=10,
+            state=tk.DISABLED
+        )
+        self.history_text.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
+        
+        # スクロールバー
+        scrollbar = ctk.CTkScrollbar(self.history_frame, command=self.history_text.yview)
+        scrollbar.grid(row=0, column=1, sticky="ns")
+        self.history_text.configure(yscrollcommand=scrollbar.set)
+        
+        # テキストタグ設定
+        self.history_text.tag_config("user", foreground="#3B8ED0", font=("Yu Gothic UI", 11, "bold")) # Blue
+        self.history_text.tag_config("assistant", foreground=text_color, font=("Yu Gothic UI", 11))
+        self.history_text.tag_config("timestamp", foreground="gray", font=("Yu Gothic UI", 9))
+        self.history_text.tag_config("model", foreground="gray", font=("Yu Gothic UI", 9, "italic"))
+        self.history_text.tag_config("error", foreground="#E04F5F") # Red
+        
+        # 3. 入力エリア
+        input_frame = ctk.CTkFrame(self.root, fg_color="transparent")
+        input_frame.grid(row=2, column=0, sticky="ew", padx=20, pady=(10, 20))
+        input_frame.grid_columnconfigure(0, weight=1)
+        
+        self.input_entry = ctk.CTkEntry(
+            input_frame,
+            placeholder_text="質問を入力してください...",
+            height=40,
+            font=("Yu Gothic UI", 12)
+        )
+        self.input_entry.grid(row=0, column=0, sticky="ew", padx=(0, 10))
         self.input_entry.bind("<Return>", self._on_return_key)
         
-        # マイクボタン（入力欄の右側）
-        self.mic_btn = ttk.Button(
-            entry_container,
+        # ボタンコンテナ
+        btn_frame = ctk.CTkFrame(input_frame, fg_color="transparent")
+        btn_frame.grid(row=0, column=1, sticky="e")
+        
+        # マイクボタン
+        self.mic_btn = ctk.CTkButton(
+            btn_frame,
             text="🎤",
-            width=3,
-            command=self._on_mic_click
+            width=40,
+            height=40,
+            command=self._on_mic_click,
+            fg_color="#333333",
+            hover_color="#555555"
         )
-        self.mic_btn.grid(row=0, column=1)
+        self.mic_btn.pack(side="left", padx=(0, 5))
         
-        # プレースホルダー効果
-        self.placeholder_text = "質問を入力してください（Returnキーで送信）"
-        self._set_placeholder()
-        self.input_entry.bind("<FocusIn>", self._on_entry_focus_in)
-        self.input_entry.bind("<FocusOut>", self._on_entry_focus_out)
-        
-    def _set_placeholder(self):
-        """プレースホルダーを設定"""
-        self.input_entry.insert(0, self.placeholder_text)
-        self.input_entry.config(foreground="gray")
-    
-    def _on_entry_focus_in(self, event):
-        """入力欄フォーカス時"""
-        if self.input_entry.get() == self.placeholder_text:
-            self.input_entry.delete(0, tk.END)
-            self.input_entry.config(foreground="black")
-    
-    def _on_entry_focus_out(self, event):
-        """入力欄フォーカス外れ時"""
-        if not self.input_entry.get():
-            self._set_placeholder()
-    
+        # 送信ボタン
+        self.send_btn = ctk.CTkButton(
+            btn_frame,
+            text="送信",
+            width=60,
+            height=40,
+            command=self._on_question_submit
+        )
+        self.send_btn.pack(side="left")
+
     def _on_return_key(self, event):
-        """Returnキー押下時"""
         self._on_question_submit()
     
-
     def _on_question_submit(self):
-        """質問送信"""
         question = self.input_entry.get()
-        
-        # プレースホルダーまたは空の場合は何もしない
-        if not question or question == self.placeholder_text:
+        if not question:
             return
-        
-        # 入力欄をクリア
+            
         self.input_entry.delete(0, tk.END)
-        
-        # コールバック実行
-        self.set_status("AI分析中...", "blue")
+        self.set_status("AI分析中...", "#3B8ED0") # Blue
         threading.Thread(target=self.on_question, args=(question,), daemon=True).start()
     
     def _on_mic_click(self):
-        """マイクボタンクリック"""
         if self.is_recording:
             self.is_recording = False
-            self.mic_btn.config(text="🎤")
-            self.set_status("音声認識中...", "blue")
+            self.mic_btn.configure(text="🎤", fg_color="#333333")
+            self.set_status("音声認識完了", "#2CC985") # Green
         else:
             self.is_recording = True
-            self.mic_btn.config(text="⏹️")
-            self.set_status("録音中...", "red")
+            self.mic_btn.configure(text="⏹️", fg_color="#E04F5F") # Red
+            self.set_status("聞いています...", "#E04F5F")
         
         threading.Thread(target=self.on_voice_input, daemon=True).start()
-    
+
     def _on_tts_toggle(self):
-        """TTS ON/OFFトグル"""
+        # Switchの値がすでに変わっている
         self.on_tts_toggle(self.tts_enabled.get())
-    
-    def _on_model_change(self, event):
-        """モデル変更"""
-        selected_index = self.model_combo.current()
-        model_id = self.available_models[selected_index][0]
-        self.on_model_change(model_id)
-    
+
+    def _on_model_change(self, selected_name):
+        # 名前からIDを逆引き
+        model_id = self.models_dict.get(selected_name)
+        if model_id:
+            self.on_model_change(model_id)
+
     def add_message(self, role, message, timestamp=None, model=None):
-        """
-        メッセージを履歴に追加
-        
-        Args:
-            role: "user" または "assistant"
-            message: メッセージ内容
-            timestamp: タイムスタンプ（オプション）
-            model: 使用したモデル名（assistantの場合のみ）
-        """
         self.history_text.config(state=tk.NORMAL)
         
-        # タイムスタンプ
         if timestamp:
             self.history_text.insert(tk.END, f"[{timestamp}] ", "timestamp")
         
-        # ロール名
         if role == "user":
             self.history_text.insert(tk.END, "あなた: ", "user")
         else:
             self.history_text.insert(tk.END, "SENP_AI: ", "assistant")
+            
+        self.history_text.insert(tk.END, f"{message}", role if role != "assistant" else "assistant")
         
-        # メッセージ
-        self.history_text.insert(tk.END, f"{message}", role)
-        
-        # モデル名（assistantの場合）
         if role == "assistant" and model:
-            self.history_text.insert(tk.END, f" (使用モデル: {model})", "model")
-        
+            self.history_text.insert(tk.END, f" ({model})", "model")
+            
         self.history_text.insert(tk.END, "\n\n")
-        
-        # 自動スクロール
         self.history_text.see(tk.END)
         self.history_text.config(state=tk.DISABLED)
-    
-    def set_status(self, message, color="black"):
-        """ステータスメッセージを設定"""
-        self.status_label.config(text=message, foreground=color)
-    
+
+    def set_status(self, message, color="gray"):
+        # CustomTkinterは色名ではなくHEX推奨だが、tkinterの色名も大体通る
+        # color引数が "red" などの場合、モダンな色に置き換える
+        color_map = {
+            "red": "#E04F5F",
+            "green": "#2CC985",
+            "blue": "#3B8ED0",
+            "black": "gray", # 通常色
+        }
+        actual_color = color_map.get(color, color)
+        self.status_label.configure(text=message, text_color=actual_color)
+
     def set_input_text(self, text):
-        """入力欄にテキストを設定"""
         self.input_entry.delete(0, tk.END)
         self.input_entry.insert(0, text)
-        self.input_entry.config(foreground="black")
     
     def run(self):
-        """UIメインループを開始"""
         self.root.mainloop()
-    
+
     def close(self):
-        """ウィンドウを閉じる"""
         self.root.quit()
         self.root.destroy()
-
+        
     def hide_window(self):
-        """ウィンドウを非表示にする"""
         self.root.withdraw()
 
     def show_window(self):
-        """ウィンドウを表示する"""
         self.root.deiconify()
 
-
-# テスト用
 if __name__ == "__main__":
-    test_models = [
-        ("gpt-5.1-instant", "GPT-5.1 Instant ⚡ (最新・推奨)"),
-        ("gpt-4o-mini", "GPT-4o Mini (高速・低コスト)"),
-    ]
-    
-    def test_screenshot():
-        print("スクリーンショット撮影")
-    
-    def test_question(question):
-        print(f"質問: {question}")
-    
-    def test_voice():
-        print("音声入力")
-    
-    def test_tts_toggle(enabled):
-        print(f"TTS: {enabled}")
-    
-    def test_model_change(model):
-        print(f"モデル変更: {model}")
-    
-    ui = SENPAI_UI(test_models, test_screenshot, test_question, test_voice, test_tts_toggle, test_model_change)
-    ui.add_message("assistant", "こんにちは！SENP_AIです。画面を見て質問に答えます。")
-    ui.run()
-
+    # Test logic
+    test_models = [("gemini-pro", "Gemini Pro"), ("gemini-flash", "Gemini Flash")]
+    app = SENPAI_UI(test_models, lambda x: print(x), lambda: print("mic"), lambda x: print(x), lambda x: print(x))
+    app.add_message("user", "Hello", "12:00")
+    app.add_message("assistant", "Hi there!", "12:01", "gemini-pro")
+    app.run()
