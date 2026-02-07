@@ -104,7 +104,9 @@ class AIModule:
 - 必要に応じて手順を示す
 - 日本語で回答
 - 親切で丁寧な口調
-- 重要: 出力に「**」などのマークダウンによる強調（太字）は使用しないでください。プレーンテキストで回答してください。"""
+- 重要: 出力に「**」などのマークダウンによる強調（太字）は使用しないでください。プレーンテキストで回答してください。
+- もし回答の中で、ユーザーが画面上の特定の場所（ボタンやアイコンなど）を見るべき、または操作すべきだと判断した場合は、その要素のバウンディングボックス（0-1000のスケール）を検出し、回答の最後に必ず「[TARGET_BOX: y_min, x_min, y_max, x_max]」という形式で追記してください。
+  例: 「画面左上の「新しいプロジェクト」ボタンをクリックしてください。[TARGET_BOX: 100, 200, 150, 300]」"""
             
             # Gemini APIで画像分析
             full_prompt = f"{system_prompt}\n\nユーザーの質問: {user_question}"
@@ -113,10 +115,20 @@ class AIModule:
             
             answer = response.text
             
+            # 座標抽出
+            import re
+            target_box = None
+            box_match = re.search(r"\[TARGET_BOX: (\d+), (\d+), (\d+), (\d+)\]", answer)
+            if box_match:
+                # y_min, x_min, y_max, x_max
+                target_box = [int(box_match.group(1)), int(box_match.group(2)), int(box_match.group(3)), int(box_match.group(4))]
+                answer = answer.replace(box_match.group(0), "").strip()
+
             return {
                 "success": True,
-                "answer": answer,
-                "model": self.model
+                "answer": answer.replace("[SHOW_ARROW]", "").strip(), # 旧コマンドも念のため除去
+                "model": self.model,
+                "target_box": target_box
             }
         
         except Exception as e:

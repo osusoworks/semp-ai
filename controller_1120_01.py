@@ -57,6 +57,7 @@ class SENPAI_Controller:
             screenshot.save(screenshot_path)
             
             self.current_screenshot = screenshot_path
+            self.screen_size = screenshot.size # (width, height)
             
             self.ui.set_status(f"スクリーンショット保存完了: {screenshot_path}", "green")
             
@@ -98,6 +99,32 @@ class SENPAI_Controller:
                 if self.tts_enabled:
                     self.tts_module.speak(answer)
                 
+                if result.get("target_box"):
+                    # ターゲットボックスがある場合、座標計算して矢印を表示
+                    # box: [y_min, x_min, y_max, x_max] (0-1000 scale)
+                    box = result["target_box"]
+                    y_min, x_min, y_max, x_max = box
+                    
+                    if hasattr(self, 'screen_size') and self.screen_size:
+                        screen_w, screen_h = self.screen_size
+                        
+                        # ボックスの中心座標を計算
+                        center_x = int((x_min + x_max) / 2 / 1000 * screen_w)
+                        center_y = int((y_min + y_max) / 2 / 1000 * screen_h) # ターゲットの中心
+                        
+                        # 矢印はターゲットの「上」を指したい場合が多いが、
+                        # 今回の実装では矢印の先端が (x, y) に来る。
+                        # なので、ターゲットの上端(y_min)を指すようにする
+                        target_top_y = int(y_min / 1000 * screen_h)
+                        
+                        self.ui.show_global_arrow(center_x, target_top_y)
+                    else:
+                        pass # スクリーンサイズ不明時はスキップ
+
+                elif result.get("show_arrow", False):
+                    # 後方互換性（念のため）
+                    self.ui.show_tutorial_arrow()
+
                 self.ui.set_status("準備完了", "green")
             else:
                 error_msg = f"AI分析エラー: {result.get('error', '不明なエラー')}"
