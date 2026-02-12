@@ -6,7 +6,12 @@ import pyautogui  # Added for scroll functionality
 import cv2
 import numpy as np
 from ui_1120_01 import SENPAI_UI
+<<<<<<< HEAD
 from ai_cloud_client import RemoteAIModule # Cloud Run support
+=======
+from ai_1120_01 import AIModule
+from ai_cloud_client import RemoteAIModule # Added for Cloud Run support
+>>>>>>> 6a513095656cc68912b8ce88637abe922d2b7a88
 from speech_1120_01 import SpeechModule
 from tts_1120_01 import TTSModule
 from PIL import ImageGrab
@@ -14,6 +19,7 @@ from PIL import ImageGrab
 class SENPAI_Controller:
     def __init__(self):
         """コントローラーの初期化"""
+<<<<<<< HEAD
         # AIモジュール初期化 (Cloud Run版をデフォルトで使用)
         backend_url = os.environ.get("SENP_AI_BACKEND_URL")
         if backend_url:
@@ -23,6 +29,18 @@ class SENPAI_Controller:
         
         self.ai_module = RemoteAIModule(backend_url)
         
+=======
+        # AIモジュール初期化（クラウド優先、フォールバックでローカル）
+        backend_url = os.environ.get("SENP_AI_BACKEND_URL")
+        if backend_url:
+            print(f"Using Cloud Backend AI: {backend_url}")
+            # Cloud版はモデル指定をサーバー側に委ねるか、リクエスト時に送る形になるが、現在は固定
+            self.ai_module = RemoteAIModule(backend_url)
+        else:
+            print("Using Local AI Module (Gemini API direct)")
+            # デフォルトモデル: gemini-3-flash-preview
+            self.ai_module = AIModule(model="gemini-3-flash-preview")
+>>>>>>> 6a513095656cc68912b8ce88637abe922d2b7a88
         # 音声認識モジュールの初期化（コールバックを指定）
         self.speech_module = SpeechModule(callback=self.on_speech_recognized)
         self.tts_module = TTSModule()

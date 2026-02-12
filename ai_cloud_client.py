@@ -24,6 +24,7 @@ class RemoteAIModule:
     def get_model(self):
         return "cloud-run-model"
 
+<<<<<<< HEAD
     @staticmethod
     def get_available_models():
         """UI互換性のために利用可能なモデルリストを返す"""
@@ -31,6 +32,8 @@ class RemoteAIModule:
             ("cloud-run-model", "Google Cloud Run (Gemini)"),
         ]
 
+=======
+>>>>>>> 6a513095656cc68912b8ce88637abe922d2b7a88
     def analyze_screen(self, screenshot_path, user_question):
         """
         スクリーンショットをバックエンドに送信して分析
