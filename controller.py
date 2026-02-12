@@ -5,10 +5,10 @@ from datetime import datetime
 import pyautogui  # Added for scroll functionality
 import cv2
 import numpy as np
-from ui_1120_01 import SENPAI_UI
-from ai_cloud_client import RemoteAIModule # Cloud Run support
-from speech_1120_01 import SpeechModule
-from tts_1120_01 import TTSModule
+from ui import SENPAI_UI
+from ai_client import RemoteAIModule # Cloud Run support
+from speech import SpeechModule
+from tts import TTSModule
 from PIL import ImageGrab
 
 class SENPAI_Controller:
@@ -262,7 +262,7 @@ class SENPAI_Controller:
                     # しかし今回は簡易実装として直接呼び出す（多くのTkinter操作は許容される場合が多いが、add_messageなどは微妙）
                     # 本来は self.ui.root.after(...) を使うべき。
                     
-                    # ひとまず非同期で実行
+                    # ひとひとまず非同期で実行
                     # フラグを一時的に落として連打防止
                     self.is_navigating = False 
                     
@@ -347,4 +347,3 @@ class SENPAI_Controller:
 if __name__ == "__main__":
     controller = SENPAI_Controller()
     controller.run()
-
