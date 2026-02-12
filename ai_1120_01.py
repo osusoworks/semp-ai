@@ -79,7 +79,7 @@ class AIModule:
         スクリーンショットを分析して質問に回答
         
         Args:
-            screenshot_path: スクリーンショット画像のパス
+            screenshot_path: スクリーンショット画像のパス、またはパスのリスト
             user_question: ユーザーの質問
             
         Returns:
@@ -87,16 +87,25 @@ class AIModule:
                 "success": bool,
                 "answer": str,
                 "model": str,
-                "error": str (エラー時のみ)
+                "error": str (エラー時のみ),
+                "target_box": list (if detected)
             }
         """
         try:
-            # 画像を読み込み
-            image = Image.open(screenshot_path)
+            # 画像を読み込み (リスト対応)
+            images = []
+            if isinstance(screenshot_path, list):
+                for path in screenshot_path:
+                    images.append(Image.open(path))
+            else:
+                images.append(Image.open(screenshot_path))
             
             # システムプロンプト
             system_prompt = """あなたはSENP_AIという画面分析AIアシスタントです。
 ユーザーの画面を見て、質問に丁寧に答えてください。
+こちらはWebページなどをスクロールして撮影した複数の画像（上から順）である可能性があります。
+その場合は、画像全体を通してページの内容を理解し、質問に答えてください。
+また、ユーザーが操作を行って画面が変化した後に、続きの指示を出す「ナビゲーションモード」が存在します。
 
 回答のガイドライン:
 - 画面に表示されている内容を正確に分析
@@ -106,12 +115,17 @@ class AIModule:
 - 親切で丁寧な口調
 - 重要: 出力に「**」などのマークダウンによる強調（太字）は使用しないでください。プレーンテキストで回答してください。
 - もし回答の中で、ユーザーが画面上の特定の場所（ボタンやアイコンなど）を見るべき、または操作すべきだと判断した場合は、その要素のバウンディングボックス（0-1000のスケール）を検出し、回答の最後に必ず「[TARGET_BOX: y_min, x_min, y_max, x_max]」という形式で追記してください。
-  例: 「画面左上の「新しいプロジェクト」ボタンをクリックしてください。[TARGET_BOX: 100, 200, 150, 300]」"""
+  ※座標は「1枚目の画像」を基準にしてください。もし対象が2枚目以降にある場合は、その旨を言葉で補足し、BOXは出力しないでください（座標がずれるため）。
+  例: 「画面左上の「新しいプロジェクト」ボタンをクリックしてください。[TARGET_BOX: 100, 200, 150, 300]」
+
+- もし回答が「一連の操作手順の途中」であり、ユーザーが操作した後の画面を見て続きを説明する必要がある場合は、回答の最後に必ず「[CONTINUE]」と追記してください。
+- 逆に、手順が完了した場合や、単発の質問で終わる場合は「[CONTINUE]」は不要です。"""
             
             # Gemini APIで画像分析
-            full_prompt = f"{system_prompt}\n\nユーザーの質問: {user_question}"
+            content = [system_prompt, f"\n\nユーザーの質問: {user_question}"]
+            content.extend(images)
             
-            response = self.genai_model.generate_content([full_prompt, image])
+            response = self.genai_model.generate_content(content)
             
             answer = response.text
             
@@ -124,11 +138,18 @@ class AIModule:
                 target_box = [int(box_match.group(1)), int(box_match.group(2)), int(box_match.group(3)), int(box_match.group(4))]
                 answer = answer.replace(box_match.group(0), "").strip()
 
+            # 継続フラグ抽出
+            continue_navigation = False
+            if "[CONTINUE]" in answer:
+                continue_navigation = True
+                answer = answer.replace("[CONTINUE]", "").strip()
+
             return {
                 "success": True,
                 "answer": answer.replace("[SHOW_ARROW]", "").strip(), # 旧コマンドも念のため除去
                 "model": self.model,
-                "target_box": target_box
+                "target_box": target_box,
+                "continue_navigation": continue_navigation
             }
         
         except Exception as e:
