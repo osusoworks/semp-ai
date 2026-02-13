@@ -169,8 +169,7 @@ class SENPAI_Controller:
                 self.tts_module.speak(answer)
             
             if result.get("target_box"):
-                # ターゲットボックスがある場合、座標計算して矢印を表示
-                # NOTE: スクロール撮影の場合、target_boxは1枚目の画像の座標として扱う前提
+                # ターゲットボックスがある場合、座標計算して強調表示
                 # box: [y_min, x_min, y_max, x_max] (0-1000 scale)
                 box = result["target_box"]
                 y_min, x_min, y_max, x_max = box
@@ -178,17 +177,23 @@ class SENPAI_Controller:
                 if hasattr(self, 'screen_size') and self.screen_size:
                     screen_w, screen_h = self.screen_size
                     
-                    # ボックスの中心座標を計算
-                    center_x = int((x_min + x_max) / 2 / 1000 * screen_w)
-                    # ターゲットの上端(y_min)を指すようにする
-                    target_top_y = int(y_min / 1000 * screen_h)
+                    # 座標変換 (0-1000 -> screen pixels)
+                    left = int(x_min / 1000 * screen_w)
+                    top = int(y_min / 1000 * screen_h)
+                    right = int(x_max / 1000 * screen_w)
+                    bottom = int(y_max / 1000 * screen_h)
                     
-                    self.ui.show_global_arrow(center_x, target_top_y)
+                    width = right - left
+                    height = bottom - top
+                    
+                    # 囲み表示（ハイライト）を実行
+                    self.ui.show_target_highlight(left, top, width, height)
                 else:
                     pass 
 
             elif result.get("show_arrow", False):
-                self.ui.show_tutorial_arrow()
+                # 汎用的な矢印（以前の互換性用）
+                self.ui.show_global_arrow(400, 300) # デフォルト位置
 
             # ナビゲーションモード（追従）の判定
             if result.get("continue_navigation"):

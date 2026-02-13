@@ -453,8 +453,8 @@ class SENPAI_UI:
         """
         画面上の指定座標(x, y)に赤い矢印を表示する（透明ウィンドウを使用）
         """
-        # 既存の矢印があれば消す
-        self.hide_tutorial_arrow()
+        # 既存のガイドがあれば消す
+        self.hide_visual_guide()
         
         # オーバーレイウィンドウ作成
         self.overlay_window = tk.Toplevel(self.root)
@@ -463,38 +463,23 @@ class SENPAI_UI:
         self.overlay_window.overrideredirect(True)
         self.overlay_window.attributes("-topmost", True)
         
-        # 透明化設定（Windows用）
-        # 特定の色を透明色として指定
-        transparent_color = "#000001" # ほぼ黒だが使われない色
+        # 透明化設定
+        transparent_color = "#000001"
         self.overlay_window.attributes("-transparentcolor", transparent_color)
         self.overlay_window.config(bg=transparent_color)
         
         # 矢印サイズ
         arrow_w = 40
         arrow_h = 60
-        
-        # キャンバスサイズ（矢印が動く範囲を確保）
         canvas_w = arrow_w
-        canvas_h = arrow_h + 20 # アニメーション分
-        
-        # ウィンドウ位置設定 (矢印の先端が x, y に来るように配置)
-        # 矢印の形状: Tip=(w/2, h) -> 下向き
-        # ウィンドウの左上座標 (wx, wy)
-        # Tip座標 in canvas: (w/2, h + anim_offset)
-        # Screen (x, y) = (wx + w/2, wy + h + anim_offset)
-        # wy = y - h - anim_offset
-        # wx = x - w/2
-        
-        # アニメーション初期オフセット
-        self.arrow_anim_offset = 0
+        canvas_h = arrow_h + 20
         
         base_wx = int(x - (canvas_w / 2))
         base_wy = int(y - canvas_h)
         
         self.overlay_window.geometry(f"{canvas_w}x{canvas_h}+{base_wx}+{base_wy}")
         
-        # キャンバス作成
-        self.arrow_canvas = tk.Canvas(
+        self.guide_canvas = tk.Canvas(
             self.overlay_window,
             width=canvas_w,
             height=canvas_h,
@@ -502,109 +487,169 @@ class SENPAI_UI:
             highlightthickness=0,
             bd=0
         )
-        self.arrow_canvas.pack()
-        
-        # 矢印描画 (キャンバス内座標)
-        # Tip at (w/2, h)
-        pointer_x = canvas_w / 2
-        pointer_y = arrow_h # Tip position (bottom of arrow shape)
-        
-        points = [
-            pointer_x, pointer_y,          # 先端
-            0, pointer_y * 0.6,            # 左翼
-            canvas_w * 0.3, pointer_y * 0.6,# 軸左付根
-            canvas_w * 0.3, 0,            # 軸左上
-            canvas_w * 0.7, 0,            # 軸右上
-            canvas_w * 0.7, pointer_y * 0.6,# 軸右付根
-            canvas_w, pointer_y * 0.6       # 右翼
-        ]
-        
-        self.arrow_id = self.arrow_canvas.create_polygon(points, fill="#E04F5F", outline="#C03F4F", width=2)
-        
-        # イベントバインド
-        self.overlay_window.bind("<Button-3>", self.hide_tutorial_arrow)
-        self.arrow_canvas.bind("<Button-3>", self.hide_tutorial_arrow)
-        
-        # プロパティ保存
-        self.arrow_base_y = 0 # Canvas内のY基準
-        
-        # アニメーション開始
-        self.arrow_anim_direction = 1
-        self._animate_overlay_arrow()
-        
-        # 3分後に自動消滅
-        self.arrow_timeout = self.root.after(180000, self.hide_tutorial_arrow)
-
-    def _animate_overlay_arrow(self):
-        if not hasattr(self, 'overlay_window') or not self.overlay_window or not self.overlay_window.winfo_exists():
-            return
-            
-        step = 1.0
-        limit = 10
-        
-        self.arrow_anim_offset += step * self.arrow_anim_direction
-        
-        if self.arrow_anim_offset > limit:
-            self.arrow_anim_direction = -1
-        elif self.arrow_anim_offset < 0:
-            self.arrow_anim_direction = 1
-        
-        # キャンバス内で矢印を移動
-        # create_polygonの座標を更新するのは面倒なので、moveを使う
-        # しかしmoveは相対移動。絶対位置計算が必要。
-        # 毎回再描画するか、オフセットを管理して move(dx, dy) する
-        
-        # 前回との差分を計算して移動
-        # 面倒なので coords で再設定
-        arrow_w = 40
-        arrow_h = 60
-        canvas_w = arrow_w
-        
-        # Base Y + offset
-        current_base_y = self.arrow_anim_offset
+        self.guide_canvas.pack()
         
         pointer_x = canvas_w / 2
-        pointer_y = arrow_h + current_base_y
+        pointer_y = arrow_h
         
         points = [
             pointer_x, pointer_y,
-            0, pointer_y - (arrow_h * 0.4),
-            canvas_w * 0.3, pointer_y - (arrow_h * 0.4),
-            canvas_w * 0.3, current_base_y,
-            canvas_w * 0.7, current_base_y,
-            canvas_w * 0.7, pointer_y - (arrow_h * 0.4),
-            canvas_w, pointer_y - (arrow_h * 0.4)
+            0, pointer_y * 0.6,
+            canvas_w * 0.3, pointer_y * 0.6,
+            canvas_w * 0.3, 0,
+            canvas_w * 0.7, 0,
+            canvas_w * 0.7, pointer_y * 0.6,
+            canvas_w, pointer_y * 0.6
         ]
         
-        self.arrow_canvas.coords(self.arrow_id, *points)
+        self.arrow_id = self.guide_canvas.create_polygon(points, fill="#E04F5F", outline="#C03F4F", width=2)
         
-        self.arrow_anim_id = self.root.after(50, self._animate_overlay_arrow)
+        # イベントバインド
+        self.overlay_window.bind("<Button-3>", self.hide_visual_guide)
+        self.guide_canvas.bind("<Button-3>", self.hide_visual_guide)
+        
+        self.arrow_anim_offset = 0
+        self.arrow_anim_direction = 1
+        self._animate_overlay_guide()
+        
+        # 自動消滅
+        self.guide_timeout = self.root.after(180000, self.hide_visual_guide)
 
-    def hide_tutorial_arrow(self, event=None):
-        """矢印を消す（オーバーレイも内部も）"""
-        if hasattr(self, 'arrow_timeout') and self.arrow_timeout:
-            self.root.after_cancel(self.arrow_timeout)
-            self.arrow_timeout = None
+    def show_target_highlight(self, x, y, width, height):
+        """
+        指定された領域(x, y, width, height)を強調表示（赤い枠）する
+        """
+        self.hide_visual_guide()
+        
+        padding = 10
+        win_x = x - padding
+        win_y = y - padding
+        win_w = width + padding * 2
+        win_h = height + padding * 2
+        
+        self.overlay_window = tk.Toplevel(self.root)
+        self.overlay_window.overrideredirect(True)
+        self.overlay_window.attributes("-topmost", True)
+        
+        transparent_color = "#000001"
+        self.overlay_window.attributes("-transparentcolor", transparent_color)
+        self.overlay_window.config(bg=transparent_color)
+        
+        self.overlay_window.geometry(f"{win_w}x{win_h}+{win_x}+{win_y}")
+        
+        self.guide_canvas = tk.Canvas(
+            self.overlay_window,
+            width=win_w,
+            height=win_h,
+            bg=transparent_color,
+            highlightthickness=0,
+            bd=0
+        )
+        self.guide_canvas.pack()
+        
+        # 枠線（短形）の描画
+        # target_id として保存してアニメーションさせることも可能
+        self.rect_id = self.guide_canvas.create_rectangle(
+            padding, padding, padding + width, padding + height,
+            outline="#E04F5F", width=4
+        )
+        
+        # コーナーの装飾（より「ターゲット」らしく）
+        self.corners = []
+        c_len = 20
+        c_width = 6
+        # Top-Left
+        self.corners.append(self.guide_canvas.create_line(padding, padding+c_len, padding, padding, padding+c_len, padding, fill="#E04F5F", width=c_width))
+        # Top-Right
+        self.corners.append(self.guide_canvas.create_line(padding+width-c_len, padding, padding+width, padding, padding+width, padding+c_len, fill="#E04F5F", width=c_width))
+        # Bottom-Left
+        self.corners.append(self.guide_canvas.create_line(padding, padding+height-c_len, padding, padding+height, padding+c_len, padding+height, fill="#E04F5F", width=c_width))
+        # Bottom-Right
+        self.corners.append(self.guide_canvas.create_line(padding+width-c_len, padding+height, padding+width, padding+height, padding+width, padding+height-c_len, fill="#E04F5F", width=c_width))
+
+        # イベントバインド
+        self.overlay_window.bind("<Button-3>", self.hide_visual_guide)
+        self.guide_canvas.bind("<Button-3>", self.hide_visual_guide)
+        
+        # 点滅アニメーション
+        self.rect_anim_state = 0
+        self._animate_overlay_guide()
+        
+        self.guide_timeout = self.root.after(180000, self.hide_visual_guide)
+
+    def _animate_overlay_guide(self):
+        if not hasattr(self, 'overlay_window') or not self.overlay_window or not self.overlay_window.winfo_exists():
+            return
             
-        if hasattr(self, 'arrow_anim_id') and self.arrow_anim_id:
-            self.root.after_cancel(self.arrow_anim_id)
-            self.arrow_anim_id = None
+        # 矢印アニメーション
+        if hasattr(self, 'arrow_id'):
+            step = 1.0
+            limit = 10
+            self.arrow_anim_offset += step * self.arrow_anim_direction
             
-        # 内部矢印削除
-        if hasattr(self, 'arrow_canvas') and self.arrow_canvas:
-            try:
-                self.arrow_canvas.destroy()
-            except:
-                pass
-            self.arrow_canvas = None
+            if self.arrow_anim_offset > limit: self.arrow_anim_direction = -1
+            elif self.arrow_anim_offset < 0: self.arrow_anim_direction = 1
             
-        # オーバーレイ削除
+            # 再描画
+            arrow_w = 40
+            arrow_h = 60
+            canvas_w = arrow_w
+            current_base_y = self.arrow_anim_offset
+            pointer_x = canvas_w / 2
+            pointer_y = arrow_h + current_base_y
+            
+            points = [
+                pointer_x, pointer_y,
+                0, pointer_y - (arrow_h * 0.4),
+                canvas_w * 0.3, pointer_y - (arrow_h * 0.4),
+                canvas_w * 0.3, current_base_y,
+                canvas_w * 0.7, current_base_y,
+                canvas_w * 0.7, pointer_y - (arrow_h * 0.4),
+                canvas_w, pointer_y - (arrow_h * 0.4)
+            ]
+            self.guide_canvas.coords(self.arrow_id, *points)
+
+        # 矩形アニメーション（点滅）
+        if hasattr(self, 'rect_id'):
+            self.rect_anim_state = (self.rect_anim_state + 1) % 20
+            # 5-15の間は表示, それ以外は少し明るい色にするか消す
+            if self.rect_anim_state < 10:
+                color = "#E04F5F"
+            else:
+                color = "#FF8080"
+            
+            self.guide_canvas.itemconfig(self.rect_id, outline=color)
+            for c in self.corners:
+                self.guide_canvas.itemconfig(c, fill=color)
+        
+        self.guide_anim_id = self.root.after(50, self._animate_overlay_guide)
+
+    def hide_visual_guide(self, event=None):
+        """ガイドを消す（オーバーレイ削除）"""
+        if hasattr(self, 'guide_timeout') and self.guide_timeout:
+            self.root.after_cancel(self.guide_timeout)
+            self.guide_timeout = None
+            
+        if hasattr(self, 'guide_anim_id') and self.guide_anim_id:
+            self.root.after_cancel(self.guide_anim_id)
+            self.guide_anim_id = None
+            
+        if hasattr(self, 'guide_canvas') and self.guide_canvas:
+            try: self.guide_canvas.destroy()
+            except: pass
+            self.guide_canvas = None
+            
         if hasattr(self, 'overlay_window') and self.overlay_window:
-            try:
-                self.overlay_window.destroy()
-            except:
-                pass
+            try: self.overlay_window.destroy()
+            except: pass
             self.overlay_window = None
+        
+        # クリーンアップ
+        if hasattr(self, 'arrow_id'): del self.arrow_id
+        if hasattr(self, 'rect_id'): 
+            del self.rect_id
+            del self.corners
+
 
 if __name__ == "__main__":
     # Test logic

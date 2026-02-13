@@ -25,6 +25,9 @@ def health_check():
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
+    # Get requested model from form data
+    requested_model = request.form.get('model')
+    
     try:
         module = get_ai_module()
     except Exception as e:
@@ -51,10 +54,13 @@ def analyze():
             img = Image.open(file.stream)
             images.append(img)
             
-        result = module.analyze_images(images, user_question)
+        # Pass model_override to analyze_images
+        result = module.analyze_images(images, user_question, model_override=requested_model)
         return jsonify(result)
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": f"Analysis failed: {str(e)}"}), 500
 
 if __name__ == "__main__":

@@ -17,21 +17,27 @@ except ImportError:
 class AIModule:
     # 利用可能なGeminiモデル一覧（2026年最新）
     AVAILABLE_MODELS = [
-        ("gemini-2.0-flash-exp", "Gemini 2.0 Flash Experimental (高速・最新)"),
-        ("gemini-1.5-flash", "Gemini 1.5 Flash (高速・安定)"),
-        ("gemini-1.5-pro", "Gemini 1.5 Pro (高精度)"),
+        ("gemini-3.0-flash", "Gemini 3 Flash (最新・最高速)"),
+        ("gemini-3.0-pro", "Gemini 3 Pro (最新・最高精度)"),
+        ("gemini-2.0-flash", "Gemini 2.0 Flash (安定・高速)"),
+        ("gemini-2.0-pro", "Gemini 2.0 Pro (高性能)"),
+        ("gemini-1.5-flash", "Gemini 1.5 Flash (軽量版)"),
+        ("gemini-1.5-pro", "Gemini 1.5 Pro (旧世代・高精度)"),
     ]
     
-    def __init__(self, model="gemini-2.0-flash-exp"):
+    def __init__(self, model=None):
         """
         AIモジュールの初期化
         """
+        # モデル名の取得 (環境変数 -> 引数 -> デフォルト)
+        self.model = os.environ.get("GEMINI_MODEL") or model or "gemini-3.0-flash"
+        
         # APIキーの取得
         api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
         
         if not api_key:
             # Cloud Runのログに出力されるようにprintを使用
-            print("WARNING: GOOGLE_API_KEY takes precedence. Please set GOOGLE_API_KEY environment variable.")
+            print("WARNING: GOOGLE_API_KEY is not set.")
         
         if genai is None:
             raise ImportError("google-generativeai library is missing.")
@@ -40,22 +46,19 @@ class AIModule:
         if api_key:
             genai.configure(api_key=api_key)
             
-        self.model = model
-        self.genai_model = genai.GenerativeModel(model)
-        print(f"AI Module initialized with Gemini model: {model}")
+        # self.genai_model は analyze_images 内で生成するようにするため、ここでは初期化のみ
+        print(f"AI Module initialized with default Gemini model: {self.model}")
     
-    def analyze_images(self, images, user_question):
+    def analyze_images(self, images, user_question, model_override=None):
         """
         画像オブジェクトのリストを分析して質問に回答
-        
-        Args:
-            images: PIL.Image オブジェクトのリスト
-            user_question: ユーザーの質問
-            
-        Returns:
-            dict: 結果
         """
         try:
+            # 使用するモデルを決定
+            target_model = model_override or self.model
+            print(f"Analyzing with model: {target_model}")
+            gen_model = genai.GenerativeModel(target_model)
+            
             # システムプロンプト
             system_prompt = """あなたはSENP_AIという画面分析AIアシスタントです。
 ユーザーの画面を見て、質問に丁寧に答えてください。
@@ -81,7 +84,7 @@ class AIModule:
             content = [system_prompt, f"\n\nユーザーの質問: {user_question}"]
             content.extend(images)
             
-            response = self.genai_model.generate_content(content)
+            response = gen_model.generate_content(content)
             
             answer = response.text
             
@@ -103,7 +106,7 @@ class AIModule:
             return {
                 "success": True,
                 "answer": answer.replace("[SHOW_ARROW]", "").strip(),
-                "model": self.model,
+                "model": target_model,
                 "target_box": target_box,
                 "continue_navigation": continue_navigation
             }
@@ -114,5 +117,5 @@ class AIModule:
             return {
                 "success": False,
                 "error": error_msg,
-                "model": self.model
+                "model": target_model if 'target_model' in locals() else self.model
             }

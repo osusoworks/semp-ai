@@ -8,27 +8,46 @@ class RemoteAIModule:
     ローカルのAIModuleと互換性のあるインターフェースを提供します
     """
     def __init__(self, backend_url=None):
-        self.backend_url = backend_url or os.environ.get("SENP_AI_BACKEND_URL")
-        # デフォルトでローカルテスト用のURLを設定（必要に応じて変更）
-        if not self.backend_url:
+        url = backend_url or os.environ.get("SENP_AI_BACKEND_URL")
+        
+        if url:
+            # 誤ってプロトコルが重複している場合（https://https://...）を修正
+            while url.startswith("https://https://"):
+                url = url.replace("https://https://", "https://")
+            while url.startswith("http://http://"):
+                url = url.replace("http://http://", "http://")
+            
+            # 末尾のスラッシュを削除して、パス結合時のエラーを防ぐ
+            url = url.rstrip("/")
+            
+            self.backend_url = url
+            print(f"Cloud AI Client initialized with URL: {self.backend_url}")
+        else:
             self.backend_url = "http://localhost:8080"
             print(f"Cloud AI Client initialized with default URL: {self.backend_url}")
-        else:
-            print(f"Cloud AI Client initialized with URL: {self.backend_url}")
+            
+        self.current_model = "gemini-3.0-flash" # デフォルトモデル
 
     def set_model(self, model):
-        # リモート側で制御するため、現在は何もしないがインターフェースとして残す
-        print(f"Remote model setting check: {model}")
-        pass
+        """
+        使用するモデルを設定
+        """
+        self.current_model = model
+        print(f"Remote model selected: {self.current_model}")
 
     def get_model(self):
-        return "cloud-run-model"
+        return self.current_model
 
     @staticmethod
     def get_available_models():
-        """UI互換性のために利用可能なモデルリストを返す"""
+        """UIで選択可能なモデルリストを返す"""
         return [
-            ("cloud-run-model", "Google Cloud Run (Gemini)"),
+            ("gemini-3.0-flash", "Gemini 3 Flash (最新・最高速)"),
+            ("gemini-3.0-pro", "Gemini 3 Pro (最新・最高精度)"),
+            ("gemini-2.0-flash", "Gemini 2.0 Flash (安定・高速)"),
+            ("gemini-2.0-pro", "Gemini 2.0 Pro (高性能)"),
+            ("gemini-1.5-flash", "Gemini 1.5 Flash (軽量版)"),
+            ("gemini-1.5-pro", "Gemini 1.5 Pro (旧世代・高精度)"),
         ]
 
     def analyze_screen(self, screenshot_path, user_question):
@@ -54,11 +73,15 @@ class RemoteAIModule:
                 except Exception as e:
                     print(f"Error opening file {path}: {e}")
 
-            data = {'question': user_question}
+            # モデル情報を含める
+            data = {
+                'question': user_question,
+                'model': self.current_model
+            }
             
             # リクエスト送信
             target_url = f"{self.backend_url}/analyze"
-            print(f"Sending request to: {target_url}")
+            print(f"Sending request to: {target_url} (Model: {self.current_model})")
             response = requests.post(target_url, data=data, files=files)
             
             # ファイルを閉じる
@@ -67,7 +90,6 @@ class RemoteAIModule:
             
             if response.status_code == 200:
                 result = response.json()
-                # ローカル互換のために success フィールドなどを確認
                 return result
             else:
                 error_msg = f"Server Error ({response.status_code}): {response.text}"
@@ -81,6 +103,4 @@ class RemoteAIModule:
 
 # テスト用
 if __name__ == "__main__":
-    # 動作確認 (バックエンドが起動している前提)
     client = RemoteAIModule()
-    # ダミー画像のパスなどを指定してテスト可能
