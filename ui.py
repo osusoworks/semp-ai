@@ -181,7 +181,7 @@ class SENPAI_UI:
         self.selected_model_id = available_models[0][0] 
         self.is_recording = False
         
-        self.history_font_size = 11 # Default font size
+        self.history_font_size = 14 # Default font size
         
         # 歯車アイコン読み込み
         self.gear_image = None

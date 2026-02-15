@@ -205,6 +205,10 @@ class SENPAI_Controller:
                 tk_w = self.ui.root.winfo_screenwidth()
                 tk_h = self.ui.root.winfo_screenheight()
                 
+                # キャプチャサイズ(物理)と画面サイズ(論理)の比率を確認
+                cap_w, cap_h = self.screen_size if hasattr(self, 'screen_size') else (tk_w, tk_h)
+                print(f"DEBUG: Capture Size=({cap_w}x{cap_h}), Screen Size=({tk_w}x{tk_h})")
+                
                 # 0-1000スケールから直接Tkinterの論理ピクセルに変換
                 # 数学的に: (val/1000)*img_size*(tk_size/img_size) = (val/1000)*tk_size
                 final_left = int((x_min / 1000.0) * tk_w)
@@ -216,7 +220,7 @@ class SENPAI_Controller:
                 final_height = max(final_bottom - final_top, 30)  # 最小高30px
                 
                 # AIの座標精度誤差を吸収するため、少し余白を追加
-                margin = 15
+                margin = 5
                 final_left = max(0, final_left - margin)
                 final_top = max(0, final_top - margin)
                 final_width = final_width + margin * 2
