@@ -1,4 +1,4 @@
-# SENP_AI（センプアイ）: 迷えるPC操作を「矢印」で導くAIアシスタント
+# SENP_AI（センパイ）: 迷えるPC操作を「矢印」で導くAIアシスタント
 
 ![Project Status](https://img.shields.io/badge/Status-Review-blue)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-green)
