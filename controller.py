@@ -40,7 +40,7 @@ class SENPAI_Controller:
         )
         
         self.current_screenshot = None
-        self.tts_enabled = True
+        self.tts_enabled = False
         
         # ナビゲーション（追従モード）用変数
         self.is_navigating = False
@@ -174,7 +174,7 @@ class SENPAI_Controller:
         # 質問が空の場合はデフォルトのプロンプトを設定
         actual_question = question if question else "画面全体の内容を要約して、何ができるページか教えてください。"
         
-        final_prompt = f"{context_prompt}現在の画面を見て、以下の質問に答えてください:\n{actual_question}"
+        final_prompt = f"{context_prompt}{actual_question}"
 
         result = self.ai_module.analyze_screen(
             screenshot_path=screenshot_data,

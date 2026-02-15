@@ -173,9 +173,10 @@ class SENPAI_UI:
         self.root.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
         self.root.minsize(300, 400) # 最小サイズを小さく設定
         self.root.resizable(True, True) # リサイズ許可
+        self.root.attributes("-topmost", True) # 常に手前に表示
         
         # 変数初期化
-        self.tts_enabled = tk.BooleanVar(value=True)
+        self.tts_enabled = tk.BooleanVar(value=False)
         # コンボボックス用の変数は文字列そのものを保持
         self.selected_model_id = available_models[0][0] 
         self.is_recording = False

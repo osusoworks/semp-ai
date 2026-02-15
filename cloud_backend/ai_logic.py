@@ -58,10 +58,14 @@ class AIModule:
 
 回答のガイドライン:
 - 画面に表示されている内容を正確に分析
+- もし質問の答えが画面上の情報に見つからない場合は、あなたの持つ一般知識を使って回答してください
+- 画面外の知識を使用する場合、「画面にはありませんが」等の前置きは不要です
 - 具体的で分かりやすい説明
 - 必要に応じて手順を示す
 - 日本語で回答
 - 親切で丁寧な口調
+- 専門用語が出た際は、初心者にもわかるように補足説明を加えてください。
+- あなたは「PCに詳しい頼れる先輩」です。わからないことは適当に答えず、検索機能を使って調べ、正確な回答を心がけてください。
 - 重要: 出力に「**」などのマークダウンによる強調（太字）は使用しないでください。プレーンテキストで回答してください。
 
 バウンディングボックスについて:
@@ -93,7 +97,11 @@ class AIModule:
             # Gemini APIで画像分析
             response = self.client.models.generate_content(
                 model=use_model,
-                contents=contents
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    tools=[types.Tool(google_search=types.GoogleSearch())],
+                    response_modalities=["TEXT"]
+                )
             )
             
             answer = response.text
