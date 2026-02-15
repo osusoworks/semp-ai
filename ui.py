@@ -353,6 +353,7 @@ class SENPAI_UI:
             self.root,
             self.available_models,
             self.selected_model_id,
+            self.tts_enabled.get(),
             self._handle_setting_update,
             self.on_model_change,
             self.on_tts_toggle
