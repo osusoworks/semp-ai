@@ -99,8 +99,9 @@ class SENPAI_Controller:
             time.sleep(0.05)  # ウィンドウが消えるのを短時間待つ
             
             # キーワード判定
-            scroll_keywords = ["全体", "全部", "続き", "スクロール", "下", "残りの", "ページ"]
-            should_scroll = any(k in question for k in scroll_keywords)
+            # キーワード判定 (より広く判定する)
+            scroll_keywords = ["全体", "全部", "続き", "スクロール", "下", "残りの", "ページ", "内容", "要約", "とは", "詳細"]
+            should_scroll = any(k in question for k in scroll_keywords) if question else True # 質問がない場合はデフォルトでスクロールを試みる
             
             screenshot_data = None
             
