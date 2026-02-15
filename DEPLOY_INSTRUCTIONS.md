@@ -61,12 +61,7 @@ gcloud run services update senp-ai-backend --set-env-vars GOOGLE_API_KEY=あな�
 
 ## 5. クライアントアプリの設定
 
-<<<<<<< HEAD
-デスクトップアプリ (`run.py` または `controller.py`) からクラウド上のAIを利用するには、環境変数 `SENP_AI_BACKEND_URL` に取得した Service URL を設定するか、コード内で指定します
-=======
-
-デスクトップアプリ (`run.py` または `controller_1120_01.py`) からクラウド上のAIを利用するには、環境変数 `SENP_AI_BACKEND_URL` に取得した Service URL を設定するか、コード内で指定します。
->>>>>>> 6a513095656cc68912b8ce88637abe922d2b7a88
+デスクトップアプリ (`run.py` または `controller.py`) からクラウド上のAIを利用するには、環境変数 `SENP_AI_BACKEND_URL` に取得した Service URL を設定するか、コード内で指定します。
 
 Windows (PowerShell):
 
@@ -82,11 +77,6 @@ python run.py
   - `ai_logic.py`: AI処理ロジック (AIModule)
   - `Dockerfile`: コンテナ定義
   - `requirements.txt`: 依存ライブラリ
-<<<<<<< HEAD
 - `ai_client.py`: クライアント側（デスクトップアプリ）からクラウドAPIを呼び出すためのモジュール
-=======
-- `ai_cloud_client.py`: クライアント側（デスクトップアプリ）からクラウドAPIを呼び出すためのモジュール
-
->>>>>>> 6a513095656cc68912b8ce88637abe922d2b7a88
 
 この構成により、Google Cloud の実行環境要件を満たすことができます。
