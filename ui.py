@@ -20,7 +20,7 @@ class SettingsWindow(ctk.CTkToplevel):
                  on_update_settings, on_model_change, on_tts_toggle):
         super().__init__(parent)
         self.title("設定")
-        self.geometry("400x500")
+        self.geometry("400x450") # Height reduced
         self.resizable(False, False)
         
         self.parent = parent
@@ -62,13 +62,9 @@ class SettingsWindow(ctk.CTkToplevel):
         gen_frame = self.tabview.tab("一般")
         gen_frame.grid_columnconfigure(0, weight=1)
         
-        # Appearance Mode
-        lbl_mode = ctk.CTkLabel(gen_frame, text="外観モード:", anchor="w")
-        lbl_mode.grid(row=0, column=0, padx=10, pady=(10,0), sticky="ew")
-        self.option_mode = ctk.CTkOptionMenu(gen_frame, values=["System", "Light", "Dark"],
-                                           command=self._change_appearance_mode)
-        self.option_mode.set(ctk.get_appearance_mode())
-        self.option_mode.grid(row=1, column=0, padx=10, pady=(5,15), sticky="ew")
+        # Appearance Mode Removed per request
+        
+        # Color Theme
 
         # Color Theme
         lbl_color = ctk.CTkLabel(gen_frame, text="アクセントカラー (再起動推奨):", anchor="w")
@@ -119,8 +115,7 @@ class SettingsWindow(ctk.CTkToplevel):
         self.switch_tts = ctk.CTkSwitch(ai_frame, text="音声読み上げ (TTS)", variable=self.var_tts, command=self._on_tts_switch)
         self.switch_tts.grid(row=2, column=0, padx=10, pady=(15,10), sticky="w")
         
-    def _change_appearance_mode(self, new_appearance_mode):
-        ctk.set_appearance_mode(new_appearance_mode)
+
 
     def _change_color_theme(self, new_color_theme):
         ctk.set_default_color_theme(new_color_theme)
@@ -358,7 +353,6 @@ class SENPAI_UI:
             self.root,
             self.available_models,
             self.selected_model_id,
-            self.tts_enabled.get(),
             self._handle_setting_update,
             self.on_model_change,
             self.on_tts_toggle
@@ -370,6 +364,21 @@ class SENPAI_UI:
             self.history_text.configure(font=("Yu Gothic UI", self.history_font_size))
             self._update_text_tags()
     
+    def update_colors(self):
+        """Update colors of manual widgets (tk.Text) when theme changes"""
+        # Allow ctk to update its internal theme first
+        # self.root.update_idletasks() # Can cause flickering, skip
+        
+        # Re-fetch colors
+        try:
+            bg_color = self.root._apply_appearance_mode(ctk.ThemeManager.theme["CTkTextbox"]["fg_color"])
+            text_color = self.root._apply_appearance_mode(ctk.ThemeManager.theme["CTkTextbox"]["text_color"])
+            
+            self.history_text.configure(bg=bg_color, fg=text_color)
+            self._update_text_tags()
+        except Exception as e:
+            print(f"Color update failed: {e}")
+
     def _update_text_tags(self):
         text_color = self.root._apply_appearance_mode(ctk.ThemeManager.theme["CTkTextbox"]["text_color"])
         base_size = self.history_font_size
@@ -391,7 +400,9 @@ class SENPAI_UI:
         self.on_model_change(model_id)
         # Update settings window state if open
         if hasattr(self, 'settings_window') and self.settings_window.winfo_exists():
-             pass # Logic is handled by sharing vars or callbacks, simplified here
+            # Update the dropdown variable in settings window
+            model_name = next((name for id, name in self.available_models if id == model_id), model_id)
+            self.settings_window.var_model.set(model_name)
 
     def add_message(self, role, message, timestamp=None, model=None):
         self.history_text.config(state=tk.NORMAL)
