@@ -26,7 +26,7 @@ class RemoteAIModule:
             self.backend_url = "http://localhost:8080"
             print(f"Cloud AI Client initialized with default URL: {self.backend_url}")
             
-        self.current_model = "gemini-3.0-flash" # デフォルトモデル
+        self.current_model = "gemini-3-flash-preview" # デフォルトモデル
 
     def set_model(self, model):
         """
@@ -42,12 +42,10 @@ class RemoteAIModule:
     def get_available_models():
         """UIで選択可能なモデルリストを返す"""
         return [
-            ("gemini-3.0-flash", "Gemini 3 Flash (最新・最高速)"),
-            ("gemini-3.0-pro", "Gemini 3 Pro (最新・最高精度)"),
-            ("gemini-2.0-flash", "Gemini 2.0 Flash (安定・高速)"),
-            ("gemini-2.0-pro", "Gemini 2.0 Pro (高性能)"),
-            ("gemini-1.5-flash", "Gemini 1.5 Flash (軽量版)"),
-            ("gemini-1.5-pro", "Gemini 1.5 Pro (旧世代・高精度)"),
+            ("gemini-3-flash-preview", "Gemini 3 Flash (Preview)"),
+            ("gemini-3-pro-preview", "Gemini 3 Pro (Preview)"),
+            ("gemini-2.5-flash", "Gemini 2.5 Flash"),
+            ("gemini-2.0-flash", "Gemini 2.0 Flash (推奨・安定)"),
         ]
 
     def analyze_screen(self, screenshot_path, user_question):

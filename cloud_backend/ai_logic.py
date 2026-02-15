@@ -9,15 +9,13 @@ from PIL import Image
 class AIModule:
     # 利用可能なGeminiモデル一覧（2026年最新）
     AVAILABLE_MODELS = [
-        ("gemini-3.0-flash", "Gemini 3 Flash (最新・最高速)"),
-        ("gemini-3.0-pro", "Gemini 3 Pro (最新・最高精度)"),
-        ("gemini-2.0-flash", "Gemini 2.0 Flash (安定・高速)"),
-        ("gemini-2.0-pro", "Gemini 2.0 Pro (高性能)"),
-        ("gemini-1.5-flash", "Gemini 1.5 Flash (軽量版)"),
-        ("gemini-1.5-pro", "Gemini 1.5 Pro (旧世代・高精度)"),
+        ("gemini-3-flash-preview", "Gemini 3 Flash (Preview)"),
+        ("gemini-3-pro-preview", "Gemini 3 Pro (Preview)"),
+        ("gemini-2.5-flash", "Gemini 2.5 Flash"),
+        ("gemini-2.0-flash", "Gemini 2.0 Flash (推奨・安定)"),
     ]
     
-    def __init__(self, model="gemini-3.0-flash"):
+    def __init__(self, model="gemini-3-flash-preview"):
         """
         AIモジュールの初期化
         """
@@ -96,14 +94,30 @@ class AIModule:
                 contents.append(img)
             
             # Gemini APIで画像分析
-            response = self.client.models.generate_content(
-                model=use_model,
-                contents=contents,
-                config=types.GenerateContentConfig(
-                    tools=[types.Tool(google_search=types.GoogleSearch())],
-                    response_modalities=["TEXT"]
+            try:
+                response = self.client.models.generate_content(
+                    model=use_model,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        tools=[types.Tool(google_search=types.GoogleSearch())],
+                        response_modalities=["TEXT"]
+                    )
                 )
-            )
+            except Exception as e:
+                # 404エラー（モデルが見つからない）などの場合、安定版の2.0 Flashにフォールバック
+                if "404" in str(e) or "not found" in str(e).lower():
+                    print(f"WARNING: Model {use_model} not found. Falling back to gemini-2.0-flash.")
+                    use_model = "gemini-2.0-flash"
+                    response = self.client.models.generate_content(
+                        model=use_model,
+                        contents=contents,
+                        config=types.GenerateContentConfig(
+                            tools=[types.Tool(google_search=types.GoogleSearch())],
+                            response_modalities=["TEXT"]
+                        )
+                    )
+                else:
+                    raise e
             
             answer = response.text
             
