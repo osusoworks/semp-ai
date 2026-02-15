@@ -1,84 +1,120 @@
-# SENP_AI - Gemini-Powered PC Assistant 🤖👀
+# SENP_AI（センプアイ）: 迷えるPC操作を「矢印」で導くAIアシスタント
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Powered by Gemini](https://img.shields.io/badge/Powered%20by-Gemini-orange.svg)](https://aistudio.google.com/)
+![Project Status](https://img.shields.io/badge/Status-Review-blue)
+![Python](https://img.shields.io/badge/Python-3.10%2B-green)
+![Gemini](https://img.shields.io/badge/AI-Gemini_3_Flash-orange)
+![Google Cloud](https://img.shields.io/badge/Backend-Cloud_Run-red)
 
-**SENP_AI** は、Google Gemini のマルチモーダル機能を活用した、PC操作を視覚的・直感的にサポートするAIアシスタントです。AIがあなたの「目」となり、画面上の情報を読み取って操作をガイドします。
+## 概要 (Overview)
+
+**SENP_AI（センプアイ）**は、PC操作に不慣れなユーザーや、新しいツールの操作に迷うユーザーのために開発された、**画面オーバーレイ型AIアシスタント**です。
+ユーザーの「どこを押せばいいの？」という質問に対し、言葉での説明だけでなく、画面上に直接**「赤い矢印」**を表示して、直感的に操作を誘導します。
+
+Google Cloud Run 上のバックエンドで **Gemini 3 Flash** (最新モデル) を動作させ、マルチモーダル（画像・テキスト・音声）での解析と、高精度な座標特定を実現しています。
 
 ---
+**※ 本プロジェクトは「Agentic AI Hackathon with Google Cloud」の参加作品です。**
 
-## 🌟 主な機能
+## 主な機能 (Features)
 
-- **マルチモーダル画面解析**: 現在のスクリーンショットをAIが解析し、内容に基づいた回答を提供。
-- **音声インタフェース**:
-  - **音声認識 (STT)**: マイクボタンから話しかけるだけで質問が可能。
-  - **音声合成 (TTS)**: AIの回答を自然な音声で読み上げ。
-- **直感的なナビゲーション (Visual Guide)**: 操作箇所を画面上に赤い矢印で直接指示。
-- **スクロールキャプチャ対応**: 画面外の長いページもAIが一度に把握し、全体を考慮した回答を実現。
-- **フレキシブルな実行モード**:
-  - **Local Mode**: 自身のAPIキーを使用してローカルで推論を実行。
-  - **Cloud Mode**: Google Cloud Run 上のバックエンドと連携し、より高速かつスケーラブルに動作。
+* **🎯 矢印による直感ガイド (Visual Grounding)**:
+  * 「設定はどこ？」と聞くと、Geminiが画面を解析し、該当するボタンやメニューの位置に**赤い矢印**をオーバーレイ表示します。
+  * 言葉を読む必要がなく、見たまま操作できます。
 
-## 🏗️ システムアーキテクチャ
+* **🤖 最新AIモデル搭載**:
+  * **Gemini 3 Flash** を採用。高速なレスポンスと高いマルチモーダル認識能力で、複雑なUIも正確に理解します。
+  * Cloud Run (Serverless) バックエンドにより、スケーラブルかつ安価に運用可能です。
+
+* **📜 縦長ページ対応 (自動スクロール)**:
+  * Webサイトなど一画面に収まらない場合、「全体を見て」「下の方も確認して」と指示すると、自動でスクロールしながら複数枚のスクリーンショットを撮影・結合して解析します。
+
+* **🗣️ 音声対話 (Voice Interaction)**:
+  * キーボード入力すら面倒な時、マイクボタン一つで質問可能。回答も音声合成(TTS)で読み上げられ、ハンズフリーに近い操作感を実現しています。
+
+## システム構成 (Architecture)
 
 ```mermaid
-graph TD
-    User((ユーザー)) <--> |音声・画面| Client[Python Desktop App]
-    subgraph Local / Cloud
-        Client --> |Screenshot / Audio| Backend[AI Engine]
-        Backend --> |Vision Analysis| Gemini[Google Gemini 1.5 Pro/Flash]
-    end
-    Gemini --> |Coordinates / Text| Backend
-    Backend --> |Response / Visual Data| Client
-    Client --> |Overlay Guide| Screen[PC Screen / Arrow Overlay]
+graph LR
+    User[Desktop Client] -- 画像 + 質問/音声 --> CloudRun[Cloud Run (Python/Flask)]
+    CloudRun -- マルチモーダル解析 --> Gemini[Gemini 3 Flash]
+    Gemini -- 座標データ + 回答 --> CloudRun
+    CloudRun -- レスポンス --> User
+    User -- 矢印描画/音声合成 --> Screen[画面オーバーレイ]
 ```
 
-## 🚀 セットアップ
+### 技術スタック
 
-### 1. 依存パッケージのインストール
+* **Backend**: Python (Flask), Google Cloud Run
+* **AI**: Google GenAI SDK v1.0 (Gemini 3 Flash)
+* **Frontend**: Python (CustomTkinter)
+* **Tools**: SpeechRecognition, gTTS/pyttsx3, PyAutoGUI, Pillow
 
-Python 3.9以上がインストールされていることを確認してください。
+## 使い方 (Usage)
+
+1. **クライアント起動**:
+
+    ```bash
+    python run.py
+    ```
+
+2. **質問**:
+    * テキスト入力をするか、マイクアイコンを押して音声で「○○の設定はどこ？」などと質問します。
+3. **ガイド**:
+    * AIが画面を解析し、操作すべき場所に**赤い矢印**が表示されます。
+    * 必要に応じて音声で補足説明をしてくれます。
+
+## 環境構築 (Setup)
+
+### 1. 前提条件
+
+* Python 3.10 以上
+* Google Cloud Project (バックエンドデプロイ用)
+* **推奨**: Cloud RunのエンドポイントURL (環境変数 `SENP_AI_BACKEND_URL` に設定)
+
+### 2. インストール (Local Client)
 
 ```bash
+# リポジトリのクローン
+git clone <repository-url>
+cd SENP_AI_G_HKSN
+
+# 依存パッケージのインストール
 pip install -r requirements.txt
 ```
 
-### 2. 環境変数の設定
+### 3. 設定 (Environment Variables)
 
-`Local Mode` で動かす場合はAPIキーが必要です。`Cloud Mode` の場合はバックエンドURLを指定します。
-
-**Windows (PowerShell):**
+**Cloud Run (推奨)**:
 
 ```powershell
-$env:GOOGLE_API_KEY="あなたのAPIキー"
-# またはクラウド版を使用する場合
-$env:SENP_AI_BACKEND_URL="https://your-cloud-run-url.a.run.app"
+$env:SENP_AI_BACKEND_URL="https://your-cloud-run-service-url"
 ```
 
-**Mac / Linux (Bash):**
+**Local Mode (API Key直接利用)**:
 
-```bash
-export GOOGLE_API_KEY="あなたのAPIキー"
-# または
-export SENP_AI_BACKEND_URL="https://your-cloud-run-url.a.run.app"
+```powershell
+$env:GOOGLE_API_KEY="your-gemini-api-key"
 ```
 
-## 📖 使い方
+## ディレクトリ構成
 
-1. `python run.py` を実行してアプリを起動します。
-2. 質問をテキスト入力するか、マイクアイコンを押して話しかけます。
-3. AIが画面を解析し、回答を返します。特定の操作が必要な場合は、画面上に矢印が表示されます。
+```
+SENP_AI_G_HKSN/
+├── cloud_backend/      # Cloud Run用バックエンド (Flask + Gemini SDK)
+│   ├── main.py
+│   ├── ai_logic.py     # Gemini 3 Flash との通信ロジック
+│   └── Dockerfile
+├── run.py              # クライアントアプリ起動スクリプト
+├── controller.py       # アプリのメイン制御ロジック
+├── ui.py               # CustomTkinter製UI (オーバーレイ表示含む)
+├── ai_client.py        # バックエンドとの通信クライアント
+├── speech.py           # 音声認識モジュール
+└── tts.py              # 音声合成モジュール
+```
 
-## 🛠️ 技術スタック
+## ライセンス
 
-- **Language**: Python 3.9+
-- **Frontend**: CustomTkinter (Modern UI Framework)
-- **AI Engine**: Google Gemini 1.5 Series (Pro / Flash)
-- **Infrastructure**: Google Cloud Run (Backend API)
-- **Image Processing**: Pillow (PIL), PyAutoGUI
-- **Audio**: SpeechRecognition, Pyttsx3 / gTTS
+MIT License
 
-## ⚖️ ライセンス
-
-[MIT License](LICENSE)
+---
+*Created by [Your Name / Team Name] for Agentic AI Hackathon with Google Cloud (2026)*
