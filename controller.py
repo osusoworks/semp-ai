@@ -201,43 +201,32 @@ class SENPAI_Controller:
                 box = result["target_box"]
                 y_min, x_min, y_max, x_max = box
                 
-                if hasattr(self, 'screen_size') and self.screen_size:
-                    img_w, img_h = self.screen_size
-                    
-                    # Tkinter screen size (logical pixels)
-                    # Use ui instance to get screen dimensions
-                    tk_w = self.ui.root.winfo_screenwidth()
-                    tk_h = self.ui.root.winfo_screenheight()
-                    
-                    # Calculate scaling factors
-                    if img_w > 0 and img_h > 0:
-                        scale_x = tk_w / img_w
-                        scale_y = tk_h / img_h
-                    else:
-                        scale_x = 1.0
-                        scale_y = 1.0
-
-                    print(f"DEBUG: Image=({img_w}x{img_h}), Tk=({tk_w}x{tk_h}), Scale=({scale_x:.2f}, {scale_y:.2f})")
-
-                    # 1. Convert 0-1000 scale to Image Pixels
-                    px_left = (x_min / 1000.0) * img_w
-                    px_top = (y_min / 1000.0) * img_h
-                    px_right = (x_max / 1000.0) * img_w
-                    px_bottom = (y_max / 1000.0) * img_h
-                    
-                    # 2. Scale to Tkinter Logical Pixels
-                    final_left = int(px_left * scale_x)
-                    final_top = int(px_top * scale_y)
-                    final_right = int(px_right * scale_x)
-                    final_bottom = int(px_bottom * scale_y)
-                    
-                    final_width = final_right - final_left
-                    final_height = final_bottom - final_top
-                    
-                    # 囲み表示（ハイライト）を実行
-                    self.ui.show_target_highlight(final_left, final_top, final_width, final_height)
-                else:
-                    pass 
+                # Tkinter screen size (論理ピクセル = overlay座標系)
+                tk_w = self.ui.root.winfo_screenwidth()
+                tk_h = self.ui.root.winfo_screenheight()
+                
+                # 0-1000スケールから直接Tkinterの論理ピクセルに変換
+                # 数学的に: (val/1000)*img_size*(tk_size/img_size) = (val/1000)*tk_size
+                final_left = int((x_min / 1000.0) * tk_w)
+                final_top = int((y_min / 1000.0) * tk_h)
+                final_right = int((x_max / 1000.0) * tk_w)
+                final_bottom = int((y_max / 1000.0) * tk_h)
+                
+                final_width = max(final_right - final_left, 30)  # 最小幅30px
+                final_height = max(final_bottom - final_top, 30)  # 最小高30px
+                
+                # AIの座標精度誤差を吸収するため、少し余白を追加
+                margin = 15
+                final_left = max(0, final_left - margin)
+                final_top = max(0, final_top - margin)
+                final_width = final_width + margin * 2
+                final_height = final_height + margin * 2
+                
+                print(f"DEBUG: Box(0-1000)={box}, Screen(Tk)=({tk_w}x{tk_h})")
+                print(f"DEBUG: Marker -> Left={final_left}, Top={final_top}, W={final_width}, H={final_height}")
+                
+                # 囲み表示（ハイライト）を実行
+                self.ui.show_target_highlight(final_left, final_top, final_width, final_height) 
 
             elif result.get("show_arrow", False):
                 # 汎用的な矢印（以前の互換性用）
