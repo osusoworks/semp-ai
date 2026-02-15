@@ -5,6 +5,7 @@ from datetime import datetime
 import pyautogui  # Added for scroll functionality
 import cv2
 import numpy as np
+# import ctypes # Removed to avoid conflict
 from ui import SENPAI_UI
 from ai_client import RemoteAIModule # Cloud Run support
 from speech import SpeechModule
@@ -14,6 +15,8 @@ from PIL import ImageGrab
 class SENPAI_Controller:
     def __init__(self):
         """コントローラーの初期化"""
+        self.chat_history = [] # 会話履歴を保持
+        
         # AIモジュール初期化 (Cloud Run版をデフォルトで使用)
         backend_url = os.environ.get("SENP_AI_BACKEND_URL")
         if backend_url:
@@ -43,7 +46,7 @@ class SENPAI_Controller:
         self.is_navigating = False
         self.last_screen_array = None
         self.navigation_thread = threading.Thread(target=self._navigation_loop, daemon=True)
-        self.navigation_thread.start()
+        # self.navigation_thread.start() # ナビゲーションモードを一時無効化
         
         # 起動メッセージ
 
@@ -87,6 +90,9 @@ class SENPAI_Controller:
         try:
             # ユーザーメッセージを表示
             self.ui.add_message("user", question, self._get_timestamp())
+            
+            # 履歴に追加
+            self.chat_history.append({"role": "user", "text": question})
             
             # UIを一時的に非表示にしてスクリーンショットを撮影
             self.ui.hide_window()
@@ -151,17 +157,38 @@ class SENPAI_Controller:
         # AI分析
         self.ui.set_status(f"AI分析中... (モデル: {self.ai_module.get_model()})", "blue")
         
+        # 履歴を含むプロンプトの構築
+        context_prompt = ""
+        # 履歴が存在する場合、直近の履歴を追加する（今回の質問はすでに履歴に入っているが、プロンプトには含めず最後の質問として扱う）
+        # chat_history[-1] は今回の質問なので、除外して過去分だけコンテキストにする
+        if len(self.chat_history) > 1:
+            recent_history = self.chat_history[-6:-1] # 今回の質問を除いた直近5件
+            history_text = ""
+            for msg in recent_history:
+                role_name = "User" if msg['role'] == "user" else "AI"
+                history_text += f"{role_name}: {msg['text']}\n"
+            
+            if history_text:
+                context_prompt = f"これまでの会話履歴:\n{history_text}\n\n"
+        
         # 質問が空の場合はデフォルトのプロンプトを設定
         actual_question = question if question else "画面全体の内容を要約して、何ができるページか教えてください。"
+        
+        final_prompt = f"{context_prompt}現在の画面を見て、以下の質問に答えてください:\n{actual_question}"
 
         result = self.ai_module.analyze_screen(
             screenshot_path=screenshot_data,
-            user_question=actual_question
+            user_question=final_prompt
         )
         
         if result["success"]:
             answer = result["answer"]
-            model_used = result["model"]
+            # ユーザーが選択しているモデル名を優先表示する（バックエンドの内部名は無視）
+            model_used = self.ai_module.get_model() 
+            
+            # 履歴に追加
+            self.chat_history.append({"role": "assistant", "text": answer})
+            
             self.ui.add_message("assistant", answer, self._get_timestamp(), model=model_used)
             
             # TTS音声出力
@@ -174,36 +201,50 @@ class SENPAI_Controller:
                 box = result["target_box"]
                 y_min, x_min, y_max, x_max = box
                 
-                if hasattr(self, 'screen_size') and self.screen_size:
-                    screen_w, screen_h = self.screen_size
-                    
-                    # 座標変換 (0-1000 -> screen pixels)
-                    left = int(x_min / 1000 * screen_w)
-                    top = int(y_min / 1000 * screen_h)
-                    right = int(x_max / 1000 * screen_w)
-                    bottom = int(y_max / 1000 * screen_h)
-                    
-                    width = right - left
-                    height = bottom - top
-                    
-                    # 囲み表示（ハイライト）を実行
-                    self.ui.show_target_highlight(left, top, width, height)
-                else:
-                    pass 
+                # Tkinter screen size (論理ピクセル = overlay座標系)
+                tk_w = self.ui.root.winfo_screenwidth()
+                tk_h = self.ui.root.winfo_screenheight()
+                
+                # 0-1000スケールから直接Tkinterの論理ピクセルに変換
+                # 数学的に: (val/1000)*img_size*(tk_size/img_size) = (val/1000)*tk_size
+                final_left = int((x_min / 1000.0) * tk_w)
+                final_top = int((y_min / 1000.0) * tk_h)
+                final_right = int((x_max / 1000.0) * tk_w)
+                final_bottom = int((y_max / 1000.0) * tk_h)
+                
+                final_width = max(final_right - final_left, 30)  # 最小幅30px
+                final_height = max(final_bottom - final_top, 30)  # 最小高30px
+                
+                # AIの座標精度誤差を吸収するため、少し余白を追加
+                margin = 15
+                final_left = max(0, final_left - margin)
+                final_top = max(0, final_top - margin)
+                final_width = final_width + margin * 2
+                final_height = final_height + margin * 2
+                
+                print(f"DEBUG: Box(0-1000)={box}, Screen(Tk)=({tk_w}x{tk_h})")
+                print(f"DEBUG: Marker -> Left={final_left}, Top={final_top}, W={final_width}, H={final_height}")
+                
+                # 囲み表示（ハイライト）を実行
+                self.ui.show_target_highlight(final_left, final_top, final_width, final_height) 
 
             elif result.get("show_arrow", False):
                 # 汎用的な矢印（以前の互換性用）
                 self.ui.show_global_arrow(400, 300) # デフォルト位置
 
             # ナビゲーションモード（追従）の判定
-            if result.get("continue_navigation"):
-                self.is_navigating = True
-                self.ui.set_status("操作を待機中... (画面変化でAIが応答します)", "blue")
-                # 現在の画面を基準画像として保存
-                self._update_last_screen()
-            else:
-                self.is_navigating = False
-                self.ui.set_status("準備完了", "green")
+            # if result.get("continue_navigation"):
+            #     self.is_navigating = True
+            #     self.ui.set_status("操作を待機中... (画面変化でAIが応答します)", "blue")
+            #     # 現在の画面を基準画像として保存
+            #     self._update_last_screen()
+            # else:
+            #     self.is_navigating = False
+            #     self.ui.set_status("準備完了", "green")
+            
+            # 追従モードは一時的に無効化
+            self.is_navigating = False
+            self.ui.set_status("準備完了", "green")
         else:
             error_msg = f"AI分析エラー: {result.get('error', '不明なエラー')}"
             self.ui.add_message("assistant", error_msg, self._get_timestamp())
